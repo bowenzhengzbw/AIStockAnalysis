@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>中国A股策略目标面板</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles/main.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">阶段一 · 战略目标与约束</p>
+          <h1>中国A股分析闭环 · 策略航标</h1>
+          <p class="subtitle">
+            聚焦1-3年投资周期，以科技驱动成长为主轴。在此面板中可快速浏览收益、风险、行业配置和风控红线，作为后续Agent体系建设的起点。
+          </p>
+        </div>
+        <div class="scenario-switcher" role="group" aria-label="市场情景切换">
+          <button class="scenario-button is-active" data-scenario="bull">
+            牛市场景
+          </button>
+          <button class="scenario-button" data-scenario="bear">熊市场景</button>
+        </div>
+      </header>
+
+      <section class="grid">
+        <article class="card span-2" id="objectives-card">
+          <header class="card__header">
+            <h2>核心收益目标</h2>
+            <span class="tag">1-3年周期</span>
+          </header>
+          <div class="card__body">
+            <dl class="metric-list">
+              <div class="metric">
+                <dt>目标年化收益率（CAGR）</dt>
+                <dd><span id="target-cagr">50%</span></dd>
+              </div>
+              <div class="metric">
+                <dt>投资期限</dt>
+                <dd><span id="investment-duration-display">3年</span></dd>
+              </div>
+              <div class="metric">
+                <dt>参考时间范围</dt>
+                <dd>滚动评估，每月复盘</dd>
+              </div>
+              <div class="metric">
+                <dt>策略主线</dt>
+                <dd>科技驱动成长（机器人优先）</dd>
+              </div>
+            </dl>
+            <form class="tuning-form" aria-label="调整核心收益目标">
+              <div class="tuning-control">
+                <label for="cagr-slider">调整目标年化收益率</label>
+                <div class="tuning-control__input">
+                  <input
+                    type="range"
+                    id="cagr-slider"
+                    name="cagr-slider"
+                    min="10"
+                    max="80"
+                    step="5"
+                    value="50"
+                  />
+                  <output id="cagr-slider-output" for="cagr-slider">50%</output>
+                </div>
+              </div>
+              <div class="tuning-control">
+                <label for="duration-slider">投资期限（年）</label>
+                <div class="tuning-control__input">
+                  <input
+                    type="range"
+                    id="duration-slider"
+                    name="duration-slider"
+                    min="1"
+                    max="3"
+                    step="1"
+                    value="3"
+                  />
+                  <output id="duration-slider-output" for="duration-slider">3年</output>
+                </div>
+              </div>
+            </form>
+            <section class="growth-visual" aria-labelledby="growth-chart-title">
+              <header class="growth-visual__header">
+                <p class="growth-visual__title" id="growth-chart-title">复利收益曲线</p>
+                <p class="growth-visual__subtitle">以100为基准本金，按月复利</p>
+              </header>
+              <svg
+                class="growth-chart"
+                id="growth-chart"
+                viewBox="0 0 280 160"
+                role="img"
+                aria-describedby="growth-chart-caption"
+                preserveAspectRatio="none"
+              >
+                <path class="growth-chart__area" data-role="area" d="" />
+                <path class="growth-chart__line" data-role="line" d="" />
+              </svg>
+              <p class="growth-visual__footer" id="growth-chart-caption">
+                终值（含复利）：<span id="growth-end-value">100</span>
+              </p>
+            </section>
+          </div>
+        </article>
+
+        <article class="card">
+          <header class="card__header">
+            <h2>风险承受度</h2>
+          </header>
+          <div class="card__body">
+            <dl class="metric-list">
+              <div class="metric">
+                <dt>最大可接受回撤</dt>
+                <dd>30%</dd>
+              </div>
+              <div class="metric">
+                <dt>波动容忍度</dt>
+                <dd>高波动可接受（年轻且有被动收入）</dd>
+              </div>
+              <div class="metric">
+                <dt>政策风险态度</dt>
+                <dd>低容忍度，触发即启动专项分析</dd>
+              </div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="card" id="allocation-card">
+          <header class="card__header">
+            <h2>仓位与行业权重</h2>
+          </header>
+          <div class="card__body">
+            <dl class="metric-list">
+              <div class="metric">
+                <dt>总体仓位</dt>
+                <dd><span id="target-exposure">90%</span></dd>
+              </div>
+              <div class="metric">
+                <dt>科技行业权重</dt>
+                <dd><span id="tech-allocation">100%</span></dd>
+              </div>
+              <div class="metric">
+                <dt>科技内部配置</dt>
+                <dd id="tech-breakdown">机器人50% / 半导体40% / 软件10%</dd>
+              </div>
+            </dl>
+            <form class="tuning-form" aria-label="调整仓位与行业配置">
+              <div class="tuning-control">
+                <label for="exposure-slider">调整目标仓位</label>
+                <div class="tuning-control__input">
+                  <input
+                    type="range"
+                    id="exposure-slider"
+                    name="exposure-slider"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value="90"
+                  />
+                  <output id="exposure-slider-output" for="exposure-slider">90%</output>
+                </div>
+              </div>
+              <div class="tuning-control">
+                <label for="tech-weight-slider">科技行业在组合中的权重</label>
+                <div class="tuning-control__input">
+                  <input
+                    type="range"
+                    id="tech-weight-slider"
+                    name="tech-weight-slider"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value="100"
+                  />
+                  <output id="tech-weight-output" for="tech-weight-slider">100%</output>
+                </div>
+              </div>
+              <div class="tuning-control">
+                <label for="robotics-slider">机器人板块占科技仓位</label>
+                <div class="tuning-control__input tuning-control__input--split">
+                  <input
+                    type="range"
+                    id="robotics-slider"
+                    name="robotics-slider"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value="50"
+                  />
+                  <output id="robotics-output" for="robotics-slider">50%</output>
+                </div>
+              </div>
+              <div class="tuning-control">
+                <label for="semiconductor-slider">半导体板块占科技仓位</label>
+                <div class="tuning-control__input tuning-control__input--split">
+                  <input
+                    type="range"
+                    id="semiconductor-slider"
+                    name="semiconductor-slider"
+                    min="0"
+                    max="50"
+                    step="5"
+                    value="40"
+                  />
+                  <output id="semiconductor-output" for="semiconductor-slider">40%</output>
+                </div>
+              </div>
+              <p class="tuning-note">
+                软件板块自动占据剩余<span id="software-output">10%</span>科技仓位。
+              </p>
+            </form>
+          </div>
+        </article>
+
+        <article class="card span-2">
+          <header class="card__header">
+            <h2>宏观判断要素</h2>
+          </header>
+          <div class="card__body">
+            <ul class="signal-list">
+              <li>
+                <span class="signal__title">股债收益差</span>
+                <span class="signal__desc">股市盈利率 - 国债收益率，越高越利好权益</span>
+              </li>
+              <li>
+                <span class="signal__title">社融-M2剪刀差</span>
+                <span class="signal__desc">社融增速高于名义GDP且M2走扩 → 牛市土壤</span>
+              </li>
+              <li>
+                <span class="signal__title">央行基准利率</span>
+                <span class="signal__desc">降息或宽松信号有利于A股估值扩张</span>
+              </li>
+              <li>
+                <span class="signal__title">杠杆资金情绪</span>
+                <span class="signal__desc">融资余额见底回升代表资金回流</span>
+              </li>
+              <li>
+                <span class="signal__title">北向资金净流入</span>
+                <span class="signal__desc">持续净流入意味着外资看多中国资产</span>
+              </li>
+              <li>
+                <span class="signal__title">经济周期指标</span>
+                <span class="signal__desc">PMI > 50、盈利周期上行支撑牛市判断</span>
+              </li>
+              <li>
+                <span class="signal__title">成交额与换手率</span>
+                <span class="signal__desc">成交活跃、换手提升印证风险偏好</span>
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="card span-2">
+          <header class="card__header">
+            <h2>政策与风控红线</h2>
+            <span class="tag tag--alert">触发即需人工确认</span>
+          </header>
+          <div class="card__body">
+            <ul class="signal-list">
+              <li>
+                <span class="signal__title">监管环境收紧</span>
+                <span class="signal__desc">涉及核心赛道的监管升级时，立即启动专项分析</span>
+              </li>
+              <li>
+                <span class="signal__title">补贴或激励退坡</span>
+                <span class="signal__desc">评估盈利假设与估值模型是否失效</span>
+              </li>
+              <li>
+                <span class="signal__title">重大负面舆情</span>
+                <span class="signal__desc">资讯Agent标记并推动风控流程，等待人工确认</span>
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="card span-2">
+          <header class="card__header">
+            <h2>AI Agent 协作边界</h2>
+          </header>
+          <div class="card__body">
+            <ul class="signal-list">
+              <li>
+                <span class="signal__title">自主执行</span>
+                <span class="signal__desc">数据采集、模型搭建、估值与回测由Agent全权处理</span>
+              </li>
+              <li>
+                <span class="signal__title">共识决策</span>
+                <span class="signal__desc">宏观研判与关键因子选择需与投资者沟通后定稿</span>
+              </li>
+              <li>
+                <span class="signal__title">审计记录</span>
+                <span class="signal__desc">所有自动动作与假设变更纳入月度合并日志</span>
+              </li>
+            </ul>
+          </div>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <p>
+          下一步：在此战略基线之上，规划宏观与行业Agent的数据方案与分析链路。
+        </p>
+      </footer>
+    </main>
+
+    <script src="scripts/app.js" defer></script>
+  </body>
+</html>
