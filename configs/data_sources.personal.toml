@@ -1,0 +1,29 @@
+budget_limit = 2000.0
+currency = "CNY"
+
+[[sources]]
+name = "Tushare Pro"
+category = "market_data"
+cost = 1000.0
+currency = "CNY"
+frequency = "daily"
+description = "Core structured A-share data API covering行情、财务、宏观等数据。"
+tags = ["api", "structured", "core"]
+
+[[sources]]
+name = "财联社 Lite"
+category = "news_intelligence"
+cost = 980.0
+currency = "CNY"
+frequency = "realtime"
+description = "政策快讯与事件点评，覆盖宏观与行业热点。"
+tags = ["policy", "news", "sentiment"]
+
+[[sources]]
+name = "国家统计局公开数据"
+category = "macro"
+cost = 0.0
+currency = "CNY"
+frequency = "monthly"
+description = "宏观经济指标官方公布，作为 Macro Sentinel 的基础。"
+tags = ["macro", "official"]

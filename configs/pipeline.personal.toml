@@ -1,0 +1,52 @@
+name = "personal_investor_phase1"
+currency = "CNY"
+
+[[tasks]]
+id = "macro_indicators_daily"
+source = "Tushare Pro"
+dataset = "macro_indicators"
+frequency = "daily"
+owners = ["macro_sentinel"]
+description = "Fetch core macroeconomic indicators for Macro Sentinel dashboard."
+tags = ["macro", "phase1"]
+window = "10y"
+
+[[tasks]]
+id = "market_quotes_eod"
+source = "Tushare Pro"
+dataset = "market_quotes"
+frequency = "daily"
+owners = ["data_engineer", "company_analyst"]
+description = "Ingest end-of-day market quotes and reference data."
+tags = ["market", "price", "phase1"]
+window = "5y"
+
+[[tasks]]
+id = "policy_flash_alerts"
+source = "财联社 Lite"
+dataset = "policy_flash"
+frequency = "intraday"
+owners = ["policy_watcher"]
+description = "Capture high-priority policy and regulatory alerts for quick triage."
+tags = ["policy", "news", "phase1"]
+
+[[tasks]]
+id = "news_sentiment_hourly"
+source = "财联社 Lite"
+dataset = "news_sentiment"
+frequency = "hourly"
+owners = ["news_sentiment_scout"]
+description = "Refresh news sentiment embeddings for coverage universe."
+tags = ["news", "sentiment", "phase1"]
+depends_on = ["policy_flash_alerts"]
+window = "90d"
+
+[[tasks]]
+id = "macro_monthly_statistical"
+source = "国家统计局公开数据"
+dataset = "macro_statistical"
+frequency = "monthly"
+owners = ["macro_sentinel"]
+description = "Integrate official statistical releases for validation and benchmarking."
+tags = ["macro", "official", "phase1"]
+depends_on = ["macro_indicators_daily"]
