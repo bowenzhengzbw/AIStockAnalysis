@@ -37,9 +37,10 @@ Comprehensive AI-driven research platform for China's A-share market, targeting 
 - `src/pipelines/runtime.py` — Runtime facade wiring plans with registered data providers, ready to execute tasks end-to-end.
 - `src/data_providers/` — Synthetic provider implementations (Tushare、财联社、国家统计局) 用于在无真实 API 凭据的环境下验证 Phase 1 任务输出。
 - `src/examples/personal_pipeline.py` — 示例命令行工具，会注册合成数据源并输出每个任务的元数据与样例记录，帮助验证调度逻辑。
-- `src/agents/` — Agent 实现目录，目前提供 Macro Sentinel 与 Policy Watcher 预览，用于从流水线结果生成宏观与政策情绪报告。
+- `src/agents/` — Agent 实现目录，目前提供 Macro Sentinel、Policy Watcher 与 Company Analyst 预览，用于从流水线结果生成宏观、政策与公司质地报告。
 - `src/examples/macro_sentinel_preview.py` — 基于合成数据的 Macro Sentinel 报告脚本，可快速查看宏观与政策面洞察。
 - `src/examples/policy_watcher_preview.py` — Policy Watcher 报告脚本，聚焦政策快讯与舆情信号的结构化总结。
+- `src/examples/company_analyst_preview.py` — Company Analyst 报告脚本，聚焦核心覆盖公司的财务、估值与情绪信号。
 - `src/web/server.py` — 基于标准库的轻量 HTTP 服务，暴露宏观巡检报告与健康检查端点，便于网页或其他客户端集成。
 - `tests/test_data_sources.py` — Pytest-based validation covering TOML loading, categorisation, tag indexing, and budget enforcement logic.
 - `tests/test_pipeline_planner.py` — Pytest suite ensuring the ingestion plan loader validates dependencies and guards against incorrect data source wiring。
@@ -84,6 +85,16 @@ python -m src.examples.policy_watcher_preview
 
 该命令会整理财联社政策快讯与新闻情绪数据，输出结构化摘要与重点主题列表，帮助快速识别政策受益方向。
 
+### Company Analyst 预览
+
+针对核心覆盖公司的财务表现、估值与情绪速览，可执行 Company Analyst 报告脚本：
+
+```bash
+python -m src.examples.company_analyst_preview
+```
+
+脚本会读取最新流水线输出，生成包含营收、利润、估值与舆情要点的 Markdown 报告，为公司层面的投资判断提供起点。
+
 ## Web 预览（HTTP 访问）
 
 仓库提供了一个使用 Python 标准库实现的轻量 HTTP 服务，无需额外依赖即可运行：
@@ -99,6 +110,8 @@ python -m src.web.server
 - 访问 `/macro/report?format=html` 可查看自动生成的网页版本，适合作为后续前端集成的占位实现。
 - 访问 `/policy/report` 可获取政策速览巡航的 JSON 结果，包含高频主题与情绪摘要。
 - 访问 `/policy/report?format=html` 可直接预览政策速览的网页版本，便于嵌入后续前端看板。
+- 访问 `/company/report` 可查看 Company Analyst 汇总的 JSON 结构化结论。
+- 访问 `/company/report?format=html` 可快速预览公司质地巡检的网页版本。
 
 如需在容器外部或远程浏览器中访问，可通过如下命令将服务绑定至 `0.0.0.0`：
 

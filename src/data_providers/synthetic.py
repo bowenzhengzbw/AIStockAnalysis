@@ -58,9 +58,82 @@ class SyntheticTushareClient(DataProvider):
             {"date": "2024-07-31", "symbol": "300750.SZ", "close": 198.5, "turnover": 8.1e8},
         ]
     )
+    financial_records: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "symbol": "600519.SH",
+                "report_date": "2023-03-31",
+                "revenue": 298.6,
+                "net_profit": 150.4,
+                "roe": 0.062,
+                "gross_margin": 0.909,
+            },
+            {
+                "symbol": "600519.SH",
+                "report_date": "2024-03-31",
+                "revenue": 316.2,
+                "net_profit": 158.9,
+                "roe": 0.065,
+                "gross_margin": 0.912,
+            },
+            {
+                "symbol": "300750.SZ",
+                "report_date": "2023-03-31",
+                "revenue": 890.1,
+                "net_profit": 90.3,
+                "roe": 0.118,
+                "gross_margin": 0.211,
+            },
+            {
+                "symbol": "300750.SZ",
+                "report_date": "2024-03-31",
+                "revenue": 945.7,
+                "net_profit": 110.5,
+                "roe": 0.124,
+                "gross_margin": 0.226,
+            },
+        ]
+    )
+    valuation_records: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "symbol": "600519.SH",
+                "date": "2024-07-30",
+                "pe_ttm": 28.4,
+                "pb": 7.1,
+                "dividend_yield": 0.017,
+            },
+            {
+                "symbol": "600519.SH",
+                "date": "2024-07-31",
+                "pe_ttm": 27.9,
+                "pb": 7.0,
+                "dividend_yield": 0.017,
+            },
+            {
+                "symbol": "300750.SZ",
+                "date": "2024-07-30",
+                "pe_ttm": 35.2,
+                "pb": 5.8,
+                "dividend_yield": 0.004,
+            },
+            {
+                "symbol": "300750.SZ",
+                "date": "2024-07-31",
+                "pe_ttm": 34.6,
+                "pb": 5.7,
+                "dividend_yield": 0.004,
+            },
+        ]
+    )
 
     def available_datasets(self) -> Sequence[str]:
-        return ("macro_indicators", "market_quotes")
+        return (
+            "macro_indicators",
+            "market_quotes",
+            "financial_summary",
+            "valuation_snapshot",
+        )
 
     def fetch(
         self,
@@ -75,6 +148,10 @@ class SyntheticTushareClient(DataProvider):
             payload = _slice_by_window(self.macro_records, window)
         elif dataset == "market_quotes":
             payload = _slice_by_window(self.quote_records, window)
+        elif dataset == "financial_summary":
+            payload = _slice_by_window(self.financial_records, window)
+        elif dataset == "valuation_snapshot":
+            payload = _slice_by_window(self.valuation_records, window)
         else:  # pragma: no cover - guarded by _validate_dataset
             payload = []
         return IngestionResult(

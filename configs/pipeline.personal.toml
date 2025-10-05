@@ -22,6 +22,27 @@ tags = ["market", "price", "phase1"]
 window = "5y"
 
 [[tasks]]
+id = "company_financials_quarterly"
+source = "Tushare Pro"
+dataset = "financial_summary"
+frequency = "quarterly"
+owners = ["company_analyst"]
+description = "Refresh key income statement and profitability indicators for core coverage symbols."
+tags = ["company", "financials", "phase1"]
+window = "3y"
+
+[[tasks]]
+id = "company_valuation_daily"
+source = "Tushare Pro"
+dataset = "valuation_snapshot"
+frequency = "daily"
+owners = ["company_analyst"]
+description = "Track valuation ratios and dividend yields for the coverage universe."
+tags = ["company", "valuation", "phase1"]
+depends_on = ["market_quotes_eod"]
+window = "180d"
+
+[[tasks]]
 id = "policy_flash_alerts"
 source = "财联社 Lite"
 dataset = "policy_flash"

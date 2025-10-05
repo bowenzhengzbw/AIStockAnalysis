@@ -55,6 +55,14 @@ def test_runtime_executes_all_tasks(runtime: PipelineRuntime) -> None:
         record["indicator"] == "工业增加值" for record in official.payload
     )
 
+    financials = context.get("company_financials_quarterly")
+    assert financials.dataset == "financial_summary"
+    assert {row["symbol"] for row in financials.payload} >= {"600519.SH", "300750.SZ"}
+
+    valuation = context.get("company_valuation_daily")
+    assert valuation.dataset == "valuation_snapshot"
+    assert any(row["pe_ttm"] for row in valuation.payload)
+
 
 def test_runtime_supports_partial_execution(runtime: PipelineRuntime) -> None:
     context = runtime.run(tasks=["news_sentiment_hourly"])

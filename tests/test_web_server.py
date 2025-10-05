@@ -45,6 +45,7 @@ def test_root_page_lists_available_endpoints():
             body = response.read().decode("utf-8")
             assert "/macro/report" in body
             assert "/policy/report" in body
+            assert "/company/report" in body
     finally:
         _stop_server(server, thread)
 
@@ -103,6 +104,35 @@ def test_policy_report_endpoint_can_render_html():
             assert "text/html" in content_type
             assert "政策速览巡航" in body
             assert "关键结论" in body
+    finally:
+        _stop_server(server, thread)
+
+
+def test_company_report_endpoint_returns_expected_structure():
+    server, thread = _start_server()
+    host, port = server.server_address
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/company/report") as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            assert payload["title"] == "核心公司质地巡检"
+            assert payload["metrics"]
+            assert payload["markdown"].startswith("# 核心公司质地巡检")
+    finally:
+        _stop_server(server, thread)
+
+
+def test_company_report_endpoint_can_render_html():
+    server, thread = _start_server()
+    host, port = server.server_address
+    try:
+        with urllib.request.urlopen(
+            f"http://{host}:{port}/company/report?format=html"
+        ) as response:
+            content_type = response.headers.get("Content-Type", "")
+            body = response.read().decode("utf-8")
+            assert "text/html" in content_type
+            assert "核心公司质地巡检" in body
+            assert "指标速览" in body
     finally:
         _stop_server(server, thread)
 
