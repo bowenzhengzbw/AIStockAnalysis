@@ -37,6 +37,18 @@ def test_health_endpoint_serves_json():
         _stop_server(server, thread)
 
 
+def test_root_page_lists_available_endpoints():
+    server, thread = _start_server()
+    host, port = server.server_address
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/") as response:
+            body = response.read().decode("utf-8")
+            assert "/macro/report" in body
+            assert "/policy/report" in body
+    finally:
+        _stop_server(server, thread)
+
+
 def test_macro_report_endpoint_returns_expected_structure():
     server, thread = _start_server()
     host, port = server.server_address
@@ -62,6 +74,35 @@ def test_macro_report_endpoint_can_render_html():
             assert "text/html" in content_type
             assert "宏观巡检快照" in body
             assert "指标速览" in body
+    finally:
+        _stop_server(server, thread)
+
+
+def test_policy_report_endpoint_returns_expected_structure():
+    server, thread = _start_server()
+    host, port = server.server_address
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/policy/report") as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            assert payload["title"] == "政策速览巡航"
+            assert payload["highlights"]
+            assert payload["markdown"].startswith("# 政策速览巡航")
+    finally:
+        _stop_server(server, thread)
+
+
+def test_policy_report_endpoint_can_render_html():
+    server, thread = _start_server()
+    host, port = server.server_address
+    try:
+        with urllib.request.urlopen(
+            f"http://{host}:{port}/policy/report?format=html"
+        ) as response:
+            content_type = response.headers.get("Content-Type", "")
+            body = response.read().decode("utf-8")
+            assert "text/html" in content_type
+            assert "政策速览巡航" in body
+            assert "关键结论" in body
     finally:
         _stop_server(server, thread)
 

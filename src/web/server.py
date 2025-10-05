@@ -1,4 +1,4 @@
-"""Lightweight HTTP server exposing Macro Sentinel output."""
+"""Lightweight HTTP server exposing Macro Sentinel and Policy Watcher output."""
 
 from __future__ import annotations
 
@@ -7,13 +7,13 @@ import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-from src.agents import MacroSentinelAgent
+from src.agents import MacroSentinelAgent, PolicyWatcherAgent
 from src.examples.personal_pipeline import build_runtime
 
 LOGGER = logging.getLogger(__name__)
 
 
-class MacroReportHandler(BaseHTTPRequestHandler):
+class AnalysisHandler(BaseHTTPRequestHandler):
     server_version = "AIStockAnalysisHTTP/0.1"
 
     def _write_json(self, payload: object, *, status: int = 200, send_body: bool = True) -> None:
@@ -55,6 +55,8 @@ class MacroReportHandler(BaseHTTPRequestHandler):
                 "<p>可用端点：</p><ul><li><a href=\"/health\">/health</a> — 健康检查</li>"
                 "<li><a href=\"/macro/report\">/macro/report</a> — 宏观巡检 JSON</li>"
                 "<li><a href=\"/macro/report?format=html\">/macro/report?format=html</a> — 宏观巡检 HTML 预览</li>"
+                "<li><a href=\"/policy/report\">/policy/report</a> — 政策速览 JSON</li>"
+                "<li><a href=\"/policy/report?format=html\">/policy/report?format=html</a> — 政策速览 HTML 预览</li>"
                 "</ul></body></html>"
             )
             self._write_html(index_html, send_body=send_body)
@@ -65,6 +67,12 @@ class MacroReportHandler(BaseHTTPRequestHandler):
         if path == "/macro/report":
             response_format = query.get("format", ["json"])[0].lower()
             self._handle_macro_report(
+                response_format=response_format, send_body=send_body
+            )
+            return
+        if path == "/policy/report":
+            response_format = query.get("format", ["json"])[0].lower()
+            self._handle_policy_report(
                 response_format=response_format, send_body=send_body
             )
             return
@@ -107,9 +115,35 @@ class MacroReportHandler(BaseHTTPRequestHandler):
         }
         self._write_json(payload, send_body=send_body)
 
+    def _handle_policy_report(
+        self, *, response_format: str = "json", send_body: bool = True
+    ) -> None:
+        runtime = build_runtime()
+        try:
+            context = runtime.run()
+            agent = PolicyWatcherAgent()
+            report = agent.generate_report(context)
+        except Exception as exc:  # pragma: no cover - defensive logging
+            LOGGER.exception("Failed to build policy report: %s", exc)
+            self._write_json({"error": "internal_error", "detail": str(exc)}, status=500)
+            return
+        if response_format == "html":
+            self._write_html(report.to_html(), send_body=send_body)
+            return
+
+        payload = {
+            "title": report.title,
+            "highlights": report.highlights,
+            "metrics": report.metrics,
+            "policy_events": report.policy_events,
+            "metadata": report.metadata,
+            "markdown": report.to_markdown(),
+        }
+        self._write_json(payload, send_body=send_body)
+
 
 def create_server(host: str = "127.0.0.1", port: int = 8000) -> ThreadingHTTPServer:
-    server: ThreadingHTTPServer = ThreadingHTTPServer((host, port), MacroReportHandler)
+    server: ThreadingHTTPServer = ThreadingHTTPServer((host, port), AnalysisHandler)
     return server
 
 

@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from .server import MacroReportHandler, create_server, run
+from .server import AnalysisHandler, create_server, run
 
-__all__ = ["MacroReportHandler", "create_server", "run"]
+__all__ = ["AnalysisHandler", "create_server", "run"]
