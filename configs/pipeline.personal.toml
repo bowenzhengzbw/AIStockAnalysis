@@ -71,3 +71,36 @@ owners = ["macro_sentinel"]
 description = "Integrate official statistical releases for validation and benchmarking."
 tags = ["macro", "official", "phase1"]
 depends_on = ["macro_indicators_daily"]
+
+[[tasks]]
+id = "industry_climate_monthly"
+source = "Tushare Pro"
+dataset = "industry_climate"
+frequency = "monthly"
+owners = ["industry_mapper"]
+description = "Track key industries'景气度与供需指标，为行业雷达提供基础数据。"
+tags = ["industry", "景气", "phase2"]
+window = "24m"
+depends_on = ["macro_indicators_daily"]
+
+[[tasks]]
+id = "industry_capital_flow_daily"
+source = "Tushare Pro"
+dataset = "industry_capital_flow"
+frequency = "daily"
+owners = ["industry_mapper", "portfolio_strategist"]
+description = "监控重点行业主力资金流向与占比变化，辅助择时。"
+tags = ["industry", "资金", "phase2"]
+depends_on = ["market_quotes_eod"]
+window = "120d"
+
+[[tasks]]
+id = "theme_heat_daily"
+source = "财联社 Lite"
+dataset = "theme_heat"
+frequency = "daily"
+owners = ["industry_mapper", "news_sentiment_scout"]
+description = "聚合热门主题热度指数与关注度变化。"
+tags = ["theme", "sentiment", "phase2"]
+depends_on = ["policy_flash_alerts"]
+window = "120d"

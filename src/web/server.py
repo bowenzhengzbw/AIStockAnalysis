@@ -1,4 +1,4 @@
-"""Lightweight HTTP server exposing Macro Sentinel and Policy Watcher output."""
+"""Lightweight HTTP server exposing agent preview reports over HTTP."""
 
 from __future__ import annotations
 
@@ -7,7 +7,12 @@ import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-from src.agents import CompanyAnalystAgent, MacroSentinelAgent, PolicyWatcherAgent
+from src.agents import (
+    CompanyAnalystAgent,
+    IndustryMapperAgent,
+    MacroSentinelAgent,
+    PolicyWatcherAgent,
+)
 from src.examples.personal_pipeline import build_runtime
 
 LOGGER = logging.getLogger(__name__)
@@ -57,6 +62,8 @@ class AnalysisHandler(BaseHTTPRequestHandler):
                 "<li><a href=\"/macro/report?format=html\">/macro/report?format=html</a> — 宏观巡检 HTML 预览</li>"
                 "<li><a href=\"/policy/report\">/policy/report</a> — 政策速览 JSON</li>"
                 "<li><a href=\"/policy/report?format=html\">/policy/report?format=html</a> — 政策速览 HTML 预览</li>"
+                "<li><a href=\"/industry/report\">/industry/report</a> — 行业景气雷达 JSON</li>"
+                "<li><a href=\"/industry/report?format=html\">/industry/report?format=html</a> — 行业景气雷达 HTML 预览</li>"
                 "<li><a href=\"/company/report\">/company/report</a> — Company Analyst JSON</li>"
                 "<li><a href=\"/company/report?format=html\">/company/report?format=html</a> — Company Analyst HTML 预览</li>"
                 "</ul></body></html>"
@@ -75,6 +82,12 @@ class AnalysisHandler(BaseHTTPRequestHandler):
         if path == "/policy/report":
             response_format = query.get("format", ["json"])[0].lower()
             self._handle_policy_report(
+                response_format=response_format, send_body=send_body
+            )
+            return
+        if path == "/industry/report":
+            response_format = query.get("format", ["json"])[0].lower()
+            self._handle_industry_report(
                 response_format=response_format, send_body=send_body
             )
             return
@@ -159,6 +172,32 @@ class AnalysisHandler(BaseHTTPRequestHandler):
             report = agent.generate_report(context)
         except Exception as exc:  # pragma: no cover - defensive logging
             LOGGER.exception("Failed to build policy report: %s", exc)
+            self._write_json({"error": "internal_error", "detail": str(exc)}, status=500)
+            return
+        if response_format == "html":
+            self._write_html(report.to_html(), send_body=send_body)
+            return
+
+        payload = {
+            "title": report.title,
+            "highlights": report.highlights,
+            "metrics": report.metrics,
+            "policy_events": report.policy_events,
+            "metadata": report.metadata,
+            "markdown": report.to_markdown(),
+        }
+        self._write_json(payload, send_body=send_body)
+
+    def _handle_industry_report(
+        self, *, response_format: str = "json", send_body: bool = True
+    ) -> None:
+        runtime = build_runtime()
+        try:
+            context = runtime.run()
+            agent = IndustryMapperAgent()
+            report = agent.generate_report(context)
+        except Exception as exc:  # pragma: no cover - defensive logging
+            LOGGER.exception("Failed to build industry report: %s", exc)
             self._write_json({"error": "internal_error", "detail": str(exc)}, status=500)
             return
         if response_format == "html":

@@ -126,6 +126,56 @@ class SyntheticTushareClient(DataProvider):
             },
         ]
     )
+    industry_climate_records: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {"month": "2024-06", "industry": "白酒", "score": 108.4},
+            {"month": "2024-07", "industry": "白酒", "score": 112.7},
+            {"month": "2024-06", "industry": "新能源汽车", "score": 97.1},
+            {"month": "2024-07", "industry": "新能源汽车", "score": 101.9},
+            {"month": "2024-06", "industry": "光伏设备", "score": 92.3},
+            {"month": "2024-07", "industry": "光伏设备", "score": 95.4},
+        ]
+    )
+    industry_capital_flow_records: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "date": "2024-07-30",
+                "industry": "白酒",
+                "net_flow": 8.6e8,
+                "main_force_ratio": 0.62,
+            },
+            {
+                "date": "2024-07-31",
+                "industry": "白酒",
+                "net_flow": 1.24e9,
+                "main_force_ratio": 0.67,
+            },
+            {
+                "date": "2024-07-30",
+                "industry": "新能源汽车",
+                "net_flow": 5.1e8,
+                "main_force_ratio": 0.55,
+            },
+            {
+                "date": "2024-07-31",
+                "industry": "新能源汽车",
+                "net_flow": 7.8e8,
+                "main_force_ratio": 0.61,
+            },
+            {
+                "date": "2024-07-30",
+                "industry": "光伏设备",
+                "net_flow": -2.4e8,
+                "main_force_ratio": 0.44,
+            },
+            {
+                "date": "2024-07-31",
+                "industry": "光伏设备",
+                "net_flow": -1.1e8,
+                "main_force_ratio": 0.48,
+            },
+        ]
+    )
 
     def available_datasets(self) -> Sequence[str]:
         return (
@@ -133,6 +183,8 @@ class SyntheticTushareClient(DataProvider):
             "market_quotes",
             "financial_summary",
             "valuation_snapshot",
+            "industry_climate",
+            "industry_capital_flow",
         )
 
     def fetch(
@@ -152,6 +204,10 @@ class SyntheticTushareClient(DataProvider):
             payload = _slice_by_window(self.financial_records, window)
         elif dataset == "valuation_snapshot":
             payload = _slice_by_window(self.valuation_records, window)
+        elif dataset == "industry_climate":
+            payload = _slice_by_window(self.industry_climate_records, window)
+        elif dataset == "industry_capital_flow":
+            payload = _slice_by_window(self.industry_capital_flow_records, window)
         else:  # pragma: no cover - guarded by _validate_dataset
             payload = []
         return IngestionResult(
@@ -198,9 +254,37 @@ class SyntheticCailiansheClient(DataProvider):
             },
         ]
     )
+    theme_heat: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "date": "2024-07-30",
+                "theme": "数字经济",
+                "heat": 76,
+                "attention_change": -3.2,
+            },
+            {
+                "date": "2024-07-31",
+                "theme": "数字经济",
+                "heat": 78,
+                "attention_change": 2.6,
+            },
+            {
+                "date": "2024-07-30",
+                "theme": "新能源车",
+                "heat": 88,
+                "attention_change": 1.5,
+            },
+            {
+                "date": "2024-07-31",
+                "theme": "新能源车",
+                "heat": 92,
+                "attention_change": 4.1,
+            },
+        ]
+    )
 
     def available_datasets(self) -> Sequence[str]:
-        return ("policy_flash", "news_sentiment")
+        return ("policy_flash", "news_sentiment", "theme_heat")
 
     def fetch(
         self,
@@ -215,6 +299,8 @@ class SyntheticCailiansheClient(DataProvider):
             payload = _slice_by_window(self.policy_events, window)
         elif dataset == "news_sentiment":
             payload = _slice_by_window(self.news_sentiment, window)
+        elif dataset == "theme_heat":
+            payload = _slice_by_window(self.theme_heat, window)
         else:  # pragma: no cover - guarded by _validate_dataset
             payload = []
         enriched_meta = self._merge_metadata(

@@ -63,6 +63,18 @@ def test_runtime_executes_all_tasks(runtime: PipelineRuntime) -> None:
     assert valuation.dataset == "valuation_snapshot"
     assert any(row["pe_ttm"] for row in valuation.payload)
 
+    industry_climate = context.get("industry_climate_monthly")
+    assert industry_climate.dataset == "industry_climate"
+    assert any(row["industry"] == "白酒" for row in industry_climate.payload)
+
+    industry_flow = context.get("industry_capital_flow_daily")
+    assert industry_flow.dataset == "industry_capital_flow"
+    assert any("net_flow" in row for row in industry_flow.payload)
+
+    theme_heat = context.get("theme_heat_daily")
+    assert theme_heat.dataset == "theme_heat"
+    assert any(row["theme"] for row in theme_heat.payload)
+
 
 def test_runtime_supports_partial_execution(runtime: PipelineRuntime) -> None:
     context = runtime.run(tasks=["news_sentiment_hourly"])
