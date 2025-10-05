@@ -275,6 +275,82 @@ class SyntheticTushareClient(DataProvider):
             },
         ]
     )
+    portfolio_position_records: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "date": "2024-07-31",
+                "symbol": "600519.SH",
+                "weight": 0.14,
+                "benchmark_weight": 0.1,
+                "return_mtd": 0.045,
+                "return_ytd": 0.12,
+            },
+            {
+                "date": "2024-07-31",
+                "symbol": "300750.SZ",
+                "weight": 0.11,
+                "benchmark_weight": 0.08,
+                "return_mtd": 0.038,
+                "return_ytd": 0.26,
+            },
+            {
+                "date": "2024-07-31",
+                "symbol": "159915.SZ",
+                "weight": 0.07,
+                "benchmark_weight": 0.1,
+                "return_mtd": -0.012,
+                "return_ytd": 0.041,
+            },
+            {
+                "date": "2024-07-31",
+                "symbol": "510500.SH",
+                "weight": 0.05,
+                "benchmark_weight": 0.08,
+                "return_mtd": -0.007,
+                "return_ytd": 0.056,
+            },
+        ]
+    )
+    rebalance_scenario_records: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "as_of": "2024-08-01",
+                "scenario": "维持当前配置",
+                "expected_return": 0.078,
+                "expected_vol": 0.168,
+                "delta_return": 0.0,
+                "delta_vol": 0.0,
+                "actions": [
+                    "保持白酒与新能源车双主线",
+                    "适度提高现金流回收标的仓位",
+                ],
+            },
+            {
+                "as_of": "2024-08-01",
+                "scenario": "攻守均衡",
+                "expected_return": 0.085,
+                "expected_vol": 0.172,
+                "delta_return": 0.007,
+                "delta_vol": 0.004,
+                "actions": [
+                    "将新能源车仓位提升 2%",
+                    "引入数字经济龙头 1% 权重",
+                ],
+            },
+            {
+                "as_of": "2024-08-01",
+                "scenario": "防御增强",
+                "expected_return": 0.072,
+                "expected_vol": 0.155,
+                "delta_return": -0.006,
+                "delta_vol": -0.013,
+                "actions": [
+                    "降低白酒仓位 2%",
+                    "提升高股息公用事业仓位 2%",
+                ],
+            },
+        ]
+    )
 
     def available_datasets(self) -> Sequence[str]:
         return (
@@ -287,6 +363,8 @@ class SyntheticTushareClient(DataProvider):
             "risk_metrics",
             "risk_exposure",
             "risk_alerts",
+            "portfolio_positions",
+            "rebalance_scenarios",
         )
 
     def fetch(
@@ -316,6 +394,10 @@ class SyntheticTushareClient(DataProvider):
             payload = _slice_by_window(self.risk_exposure_records, window)
         elif dataset == "risk_alerts":
             payload = _slice_by_window(self.risk_alert_records, window)
+        elif dataset == "portfolio_positions":
+            payload = _slice_by_window(self.portfolio_position_records, window)
+        elif dataset == "rebalance_scenarios":
+            payload = _slice_by_window(self.rebalance_scenario_records, window)
         else:  # pragma: no cover - guarded by _validate_dataset
             payload = []
         return IngestionResult(
@@ -390,9 +472,40 @@ class SyntheticCailiansheClient(DataProvider):
             },
         ]
     )
+    alpha_signals: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "timestamp": "2024-07-31T15:10:00+08:00",
+                "symbol": "600519.SH",
+                "direction": "overweight",
+                "horizon": "3m",
+                "score": 0.72,
+                "confidence": 0.78,
+                "rationale": "渠道调研反馈动销改善，消费税改革预期落地",
+            },
+            {
+                "timestamp": "2024-07-31T15:11:00+08:00",
+                "symbol": "300750.SZ",
+                "direction": "add",
+                "horizon": "6m",
+                "score": 0.81,
+                "confidence": 0.83,
+                "rationale": "发改委新能源车下乡政策叠加海外订单落地",
+            },
+            {
+                "timestamp": "2024-07-31T15:12:00+08:00",
+                "symbol": "159915.SZ",
+                "direction": "reduce",
+                "horizon": "1m",
+                "score": -0.46,
+                "confidence": 0.65,
+                "rationale": "成长风格阶段性回调，建议收缩指数化敞口",
+            },
+        ]
+    )
 
     def available_datasets(self) -> Sequence[str]:
-        return ("policy_flash", "news_sentiment", "theme_heat")
+        return ("policy_flash", "news_sentiment", "theme_heat", "alpha_signals")
 
     def fetch(
         self,
@@ -409,6 +522,8 @@ class SyntheticCailiansheClient(DataProvider):
             payload = _slice_by_window(self.news_sentiment, window)
         elif dataset == "theme_heat":
             payload = _slice_by_window(self.theme_heat, window)
+        elif dataset == "alpha_signals":
+            payload = _slice_by_window(self.alpha_signals, window)
         else:  # pragma: no cover - guarded by _validate_dataset
             payload = []
         enriched_meta = self._merge_metadata(

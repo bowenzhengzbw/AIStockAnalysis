@@ -87,6 +87,18 @@ def test_runtime_executes_all_tasks(runtime: PipelineRuntime) -> None:
     assert risk_alerts.dataset == "risk_alerts"
     assert risk_alerts.payload
 
+    portfolio_positions = context.get("portfolio_positions_daily")
+    assert portfolio_positions.dataset == "portfolio_positions"
+    assert any(row["symbol"] == "600519.SH" for row in portfolio_positions.payload)
+
+    alpha_signals = context.get("alpha_signals_daily")
+    assert alpha_signals.dataset == "alpha_signals"
+    assert alpha_signals.metadata["records"] == len(alpha_signals.payload)
+
+    rebalance = context.get("rebalance_scenarios_weekly")
+    assert rebalance.dataset == "rebalance_scenarios"
+    assert any(row["scenario"] == "攻守均衡" for row in rebalance.payload)
+
 
 def test_runtime_supports_partial_execution(runtime: PipelineRuntime) -> None:
     context = runtime.run(tasks=["news_sentiment_hourly"])

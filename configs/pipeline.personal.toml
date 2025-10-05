@@ -135,3 +135,38 @@ owners = ["risk_controller", "macro_sentinel"]
 description = "捕捉风险预警事件与限额触发情况，为风控报告提供即时提示。"
 tags = ["risk", "alerts", "phase2"]
 depends_on = ["risk_metrics_daily"]
+
+[[tasks]]
+id = "portfolio_positions_daily"
+source = "Tushare Pro"
+dataset = "portfolio_positions"
+frequency = "daily"
+owners = ["portfolio_strategist", "risk_controller"]
+description = "刷新组合持仓权重、基准对比与收益贡献，为组合策略与风险分析提供输入。"
+tags = ["portfolio", "phase3"]
+depends_on = ["market_quotes_eod", "risk_metrics_daily"]
+
+[[tasks]]
+id = "alpha_signals_daily"
+source = "财联社 Lite"
+dataset = "alpha_signals"
+frequency = "daily"
+owners = ["portfolio_strategist", "news_sentiment_scout"]
+description = "汇总政策/新闻驱动的 Alpha 信号与置信度，辅助组合调仓判断。"
+tags = ["signals", "phase3"]
+depends_on = ["policy_flash_alerts", "news_sentiment_hourly"]
+window = "30d"
+
+[[tasks]]
+id = "rebalance_scenarios_weekly"
+source = "Tushare Pro"
+dataset = "rebalance_scenarios"
+frequency = "weekly"
+owners = ["portfolio_strategist"]
+description = "生成攻守均衡等情景的预期收益/波动，并给出建议操作。"
+tags = ["portfolio", "rebalance", "phase3"]
+depends_on = [
+  "portfolio_positions_daily",
+  "risk_metrics_daily",
+  "industry_capital_flow_daily",
+]
