@@ -12,6 +12,7 @@ from src.agents import (
     IndustryMapperAgent,
     MacroSentinelAgent,
     PolicyWatcherAgent,
+    RiskControllerAgent,
 )
 from src.examples.personal_pipeline import build_runtime
 
@@ -66,6 +67,8 @@ class AnalysisHandler(BaseHTTPRequestHandler):
                 "<li><a href=\"/industry/report?format=html\">/industry/report?format=html</a> — 行业景气雷达 HTML 预览</li>"
                 "<li><a href=\"/company/report\">/company/report</a> — Company Analyst JSON</li>"
                 "<li><a href=\"/company/report?format=html\">/company/report?format=html</a> — Company Analyst HTML 预览</li>"
+                "<li><a href=\"/risk/report\">/risk/report</a> — 组合风险雷达 JSON</li>"
+                "<li><a href=\"/risk/report?format=html\">/risk/report?format=html</a> — 组合风险雷达 HTML 预览</li>"
                 "</ul></body></html>"
             )
             self._write_html(index_html, send_body=send_body)
@@ -94,6 +97,12 @@ class AnalysisHandler(BaseHTTPRequestHandler):
         if path == "/company/report":
             response_format = query.get("format", ["json"])[0].lower()
             self._handle_company_report(
+                response_format=response_format, send_body=send_body
+            )
+            return
+        if path == "/risk/report":
+            response_format = query.get("format", ["json"])[0].lower()
+            self._handle_risk_report(
                 response_format=response_format, send_body=send_body
             )
             return
@@ -198,6 +207,32 @@ class AnalysisHandler(BaseHTTPRequestHandler):
             report = agent.generate_report(context)
         except Exception as exc:  # pragma: no cover - defensive logging
             LOGGER.exception("Failed to build industry report: %s", exc)
+            self._write_json({"error": "internal_error", "detail": str(exc)}, status=500)
+            return
+        if response_format == "html":
+            self._write_html(report.to_html(), send_body=send_body)
+            return
+
+        payload = {
+            "title": report.title,
+            "highlights": report.highlights,
+            "metrics": report.metrics,
+            "policy_events": report.policy_events,
+            "metadata": report.metadata,
+            "markdown": report.to_markdown(),
+        }
+        self._write_json(payload, send_body=send_body)
+
+    def _handle_risk_report(
+        self, *, response_format: str = "json", send_body: bool = True
+    ) -> None:
+        runtime = build_runtime()
+        try:
+            context = runtime.run()
+            agent = RiskControllerAgent()
+            report = agent.generate_report(context)
+        except Exception as exc:  # pragma: no cover - defensive logging
+            LOGGER.exception("Failed to build risk report: %s", exc)
             self._write_json({"error": "internal_error", "detail": str(exc)}, status=500)
             return
         if response_format == "html":

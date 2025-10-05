@@ -20,22 +20,25 @@ def test_load_pipeline_plan_success(personal_portfolio):
 
     assert plan.name == "personal_investor_phase1"
     assert plan.currency == "CNY"
-    assert len(plan.tasks) == 10
+    assert len(plan.tasks) == 13
 
     grouped = plan.group_by_frequency()
-    assert set(grouped) == {"daily", "intraday", "hourly", "monthly", "quarterly"}
+    assert set(grouped) == {"daily", "intraday", "hourly", "monthly", "quarterly", "weekly"}
     assert {task.id for task in grouped["daily"]} == {
         "macro_indicators_daily",
         "market_quotes_eod",
         "company_valuation_daily",
         "industry_capital_flow_daily",
         "theme_heat_daily",
+        "risk_metrics_daily",
+        "risk_alerts_daily",
     }
     assert {task.id for task in grouped["quarterly"]} == {"company_financials_quarterly"}
     assert {task.id for task in grouped["monthly"]} == {
         "macro_monthly_statistical",
         "industry_climate_monthly",
     }
+    assert {task.id for task in grouped["weekly"]} == {"risk_exposure_snapshot"}
 
     tushare_tasks = plan.tasks_for_source("Tushare Pro")
     assert {task.dataset for task in tushare_tasks} == {
@@ -45,13 +48,16 @@ def test_load_pipeline_plan_success(personal_portfolio):
         "valuation_snapshot",
         "industry_climate",
         "industry_capital_flow",
+        "risk_metrics",
+        "risk_exposure",
+        "risk_alerts",
     }
 
     assert plan.missing_dependencies() == {}
 
     serialized = plan.to_dict()
     assert serialized["name"] == "personal_investor_phase1"
-    assert len(serialized["tasks"]) == 10
+    assert len(serialized["tasks"]) == 13
 
 
 def test_topological_order_respects_dependencies(personal_portfolio):

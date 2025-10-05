@@ -5,6 +5,7 @@ from .company import CompanyAnalystAgent
 from .industry import IndustryMapperAgent
 from .macro import MacroSentinelAgent
 from .policy import PolicyWatcherAgent
+from .risk import RiskControllerAgent
 
 __all__ = [
     "Agent",
@@ -13,4 +14,5 @@ __all__ = [
     "IndustryMapperAgent",
     "MacroSentinelAgent",
     "PolicyWatcherAgent",
+    "RiskControllerAgent",
 ]

@@ -37,11 +37,12 @@ Comprehensive AI-driven research platform for China's A-share market, targeting 
 - `src/pipelines/runtime.py` — Runtime facade wiring plans with registered data providers, ready to execute tasks end-to-end.
 - `src/data_providers/` — Synthetic provider implementations (Tushare、财联社、国家统计局) 用于在无真实 API 凭据的环境下验证 Phase 1 任务输出。
 - `src/examples/personal_pipeline.py` — 示例命令行工具，会注册合成数据源并输出每个任务的元数据与样例记录，帮助验证调度逻辑。
-- `src/agents/` — Agent 实现目录，目前提供 Macro Sentinel、Policy Watcher、Industry Mapper 与 Company Analyst 预览，用于从流水线结果生成宏观、政策、行业与公司质地报告。
+- `src/agents/` — Agent 实现目录，目前提供 Macro Sentinel、Policy Watcher、Industry Mapper、Company Analyst 以及 Risk Controller 预览，用于从流水线结果生成宏观、政策、行业、风险与公司质地报告。
 - `src/examples/macro_sentinel_preview.py` — 基于合成数据的 Macro Sentinel 报告脚本，可快速查看宏观与政策面洞察。
 - `src/examples/policy_watcher_preview.py` — Policy Watcher 报告脚本，聚焦政策快讯与舆情信号的结构化总结。
 - `src/examples/company_analyst_preview.py` — Company Analyst 报告脚本，聚焦核心覆盖公司的财务、估值与情绪信号。
 - `src/examples/industry_mapper_preview.py` — Industry Mapper 报告脚本，聚焦重点行业景气、资金与热门主题信号。
+- `src/examples/risk_controller_preview.py` — Risk Controller 报告脚本，聚焦组合波动率、集中度与风险预警信号。
 - `src/web/server.py` — 基于标准库的轻量 HTTP 服务，暴露宏观、政策、行业与公司巡检报告以及健康检查端点，便于网页或其他客户端集成。
 - `tests/test_data_sources.py` — Pytest-based validation covering TOML loading, categorisation, tag indexing, and budget enforcement logic.
 - `tests/test_pipeline_planner.py` — Pytest suite ensuring the ingestion plan loader validates dependencies and guards against incorrect data source wiring。
@@ -107,6 +108,16 @@ python -m src.examples.company_analyst_preview
 
 脚本会读取最新流水线输出，生成包含营收、利润、估值与舆情要点的 Markdown 报告，为公司层面的投资判断提供起点。
 
+### Risk Controller 预览
+
+针对组合风险指标与集中度监控，可执行 Risk Controller 报告脚本：
+
+```bash
+python -m src.examples.risk_controller_preview
+```
+
+脚本会汇总波动率、最大回撤、因子暴露以及风险预警事件，形成风控巡检报告，帮助在组合层面快速确认风险状态。
+
 ## Web 预览（HTTP 访问）
 
 仓库提供了一个使用 Python 标准库实现的轻量 HTTP 服务，无需额外依赖即可运行：
@@ -126,6 +137,8 @@ python -m src.web.server
 - 访问 `/industry/report?format=html` 可查看行业雷达的网页版本，便于与宏观/公司报告统一展示。
 - 访问 `/company/report` 可查看 Company Analyst 汇总的 JSON 结构化结论。
 - 访问 `/company/report?format=html` 可快速预览公司质地巡检的网页版本。
+- 访问 `/risk/report` 可获取组合风险雷达的 JSON 结果，包含波动率、暴露与风险事件摘要。
+- 访问 `/risk/report?format=html` 可查看组合风险雷达的网页版本，便于与其他报告合并展示。
 
 如需在容器外部或远程浏览器中访问，可通过如下命令将服务绑定至 `0.0.0.0`：
 

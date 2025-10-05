@@ -75,6 +75,18 @@ def test_runtime_executes_all_tasks(runtime: PipelineRuntime) -> None:
     assert theme_heat.dataset == "theme_heat"
     assert any(row["theme"] for row in theme_heat.payload)
 
+    risk_metrics = context.get("risk_metrics_daily")
+    assert risk_metrics.dataset == "risk_metrics"
+    assert any(row["metric"] == "组合年化波动率" for row in risk_metrics.payload)
+
+    risk_exposure = context.get("risk_exposure_snapshot")
+    assert risk_exposure.dataset == "risk_exposure"
+    assert any("行业集中度" in row["metric"] for row in risk_exposure.payload)
+
+    risk_alerts = context.get("risk_alerts_daily")
+    assert risk_alerts.dataset == "risk_alerts"
+    assert risk_alerts.payload
+
 
 def test_runtime_supports_partial_execution(runtime: PipelineRuntime) -> None:
     context = runtime.run(tasks=["news_sentiment_hourly"])

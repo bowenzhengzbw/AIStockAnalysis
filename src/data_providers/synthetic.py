@@ -176,6 +176,105 @@ class SyntheticTushareClient(DataProvider):
             },
         ]
     )
+    risk_metric_records: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "date": "2024-07-24",
+                "metric": "组合年化波动率",
+                "value": 0.192,
+                "previous_date": "2024-07-17",
+                "previous_value": 0.198,
+                "unit": "ratio",
+                "warning_upper": 0.24,
+            },
+            {
+                "date": "2024-07-31",
+                "metric": "组合年化波动率",
+                "value": 0.184,
+                "previous_date": "2024-07-24",
+                "previous_value": 0.192,
+                "unit": "ratio",
+                "warning_upper": 0.24,
+            },
+            {
+                "date": "2024-07-24",
+                "metric": "最大回撤（1Y）",
+                "value": -0.138,
+                "previous_date": "2024-06-30",
+                "previous_value": -0.152,
+                "unit": "ratio",
+                "warning_lower": -0.18,
+            },
+            {
+                "date": "2024-07-31",
+                "metric": "最大回撤（1Y）",
+                "value": -0.129,
+                "previous_date": "2024-07-24",
+                "previous_value": -0.138,
+                "unit": "ratio",
+                "warning_lower": -0.18,
+            },
+            {
+                "date": "2024-07-31",
+                "metric": "1日VaR(95%)",
+                "value": -0.027,
+                "previous_date": "2024-06-30",
+                "previous_value": -0.031,
+                "unit": "ratio",
+                "warning_lower": -0.04,
+            },
+        ]
+    )
+    risk_exposure_records: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "date": "2024-07-31",
+                "metric": "沪深300 Beta",
+                "value": 0.94,
+                "previous_value": 0.98,
+                "unit": "ratio",
+                "direction": "max",
+                "limit": 1.1,
+            },
+            {
+                "date": "2024-07-31",
+                "metric": "行业集中度(前3名)",
+                "value": 0.41,
+                "previous_value": 0.43,
+                "unit": "ratio",
+                "direction": "max",
+                "limit": 0.45,
+            },
+            {
+                "date": "2024-07-31",
+                "metric": "现金仓位占比",
+                "value": 0.11,
+                "previous_value": 0.08,
+                "unit": "ratio",
+                "direction": "range",
+                "lower_bound": 0.05,
+                "upper_bound": 0.15,
+            },
+        ]
+    )
+    risk_alert_records: Sequence[Mapping[str, object]] = field(
+        default_factory=lambda: [
+            {
+                "timestamp": "2024-07-31T15:05:00+08:00",
+                "title": "组合波动率低于预警线，风险水平回落",
+                "impact": "positive",
+                "severity": "low",
+                "detail": "最新年化波动率 18.4%，预警阈值 24%。",
+            },
+            {
+                "timestamp": "2024-07-31T15:06:00+08:00",
+                "title": "现金仓位上升，需确认配置意图",
+                "impact": "watch",
+                "severity": "medium",
+                "detail": "现金仓位 11%，建议对照目标区间 5%-15%。",
+            },
+        ]
+    )
 
     def available_datasets(self) -> Sequence[str]:
         return (
@@ -185,6 +284,9 @@ class SyntheticTushareClient(DataProvider):
             "valuation_snapshot",
             "industry_climate",
             "industry_capital_flow",
+            "risk_metrics",
+            "risk_exposure",
+            "risk_alerts",
         )
 
     def fetch(
@@ -208,6 +310,12 @@ class SyntheticTushareClient(DataProvider):
             payload = _slice_by_window(self.industry_climate_records, window)
         elif dataset == "industry_capital_flow":
             payload = _slice_by_window(self.industry_capital_flow_records, window)
+        elif dataset == "risk_metrics":
+            payload = _slice_by_window(self.risk_metric_records, window)
+        elif dataset == "risk_exposure":
+            payload = _slice_by_window(self.risk_exposure_records, window)
+        elif dataset == "risk_alerts":
+            payload = _slice_by_window(self.risk_alert_records, window)
         else:  # pragma: no cover - guarded by _validate_dataset
             payload = []
         return IngestionResult(

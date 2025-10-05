@@ -47,6 +47,7 @@ def test_root_page_lists_available_endpoints():
             assert "/policy/report" in body
             assert "/industry/report" in body
             assert "/company/report" in body
+            assert "/risk/report" in body
     finally:
         _stop_server(server, thread)
 
@@ -162,6 +163,35 @@ def test_company_report_endpoint_can_render_html():
             body = response.read().decode("utf-8")
             assert "text/html" in content_type
             assert "核心公司质地巡检" in body
+            assert "指标速览" in body
+    finally:
+        _stop_server(server, thread)
+
+
+def test_risk_report_endpoint_returns_expected_structure():
+    server, thread = _start_server()
+    host, port = server.server_address
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/risk/report") as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            assert payload["title"] == "组合风险雷达"
+            assert payload["highlights"]
+            assert payload["markdown"].startswith("# 组合风险雷达")
+    finally:
+        _stop_server(server, thread)
+
+
+def test_risk_report_endpoint_can_render_html():
+    server, thread = _start_server()
+    host, port = server.server_address
+    try:
+        with urllib.request.urlopen(
+            f"http://{host}:{port}/risk/report?format=html"
+        ) as response:
+            content_type = response.headers.get("Content-Type", "")
+            body = response.read().decode("utf-8")
+            assert "text/html" in content_type
+            assert "组合风险雷达" in body
             assert "指标速览" in body
     finally:
         _stop_server(server, thread)

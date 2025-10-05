@@ -104,3 +104,34 @@ description = "聚合热门主题热度指数与关注度变化。"
 tags = ["theme", "sentiment", "phase2"]
 depends_on = ["policy_flash_alerts"]
 window = "120d"
+
+[[tasks]]
+id = "risk_metrics_daily"
+source = "Tushare Pro"
+dataset = "risk_metrics"
+frequency = "daily"
+owners = ["risk_controller", "portfolio_strategist"]
+description = "跟踪组合波动率、最大回撤与 VaR 等核心风险指标。"
+tags = ["risk", "phase2"]
+depends_on = ["market_quotes_eod"]
+window = "250d"
+
+[[tasks]]
+id = "risk_exposure_snapshot"
+source = "Tushare Pro"
+dataset = "risk_exposure"
+frequency = "weekly"
+owners = ["risk_controller"]
+description = "汇总组合因子暴露、行业集中度与现金仓位，校验风险限额。"
+tags = ["risk", "exposure", "phase2"]
+depends_on = ["risk_metrics_daily"]
+
+[[tasks]]
+id = "risk_alerts_daily"
+source = "Tushare Pro"
+dataset = "risk_alerts"
+frequency = "daily"
+owners = ["risk_controller", "macro_sentinel"]
+description = "捕捉风险预警事件与限额触发情况，为风控报告提供即时提示。"
+tags = ["risk", "alerts", "phase2"]
+depends_on = ["risk_metrics_daily"]
