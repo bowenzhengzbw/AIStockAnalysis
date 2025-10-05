@@ -6,6 +6,7 @@ import json
 import threading
 import time
 import urllib.request
+from urllib.error import HTTPError
 
 from src.web import create_server
 
@@ -45,5 +46,35 @@ def test_macro_report_endpoint_returns_expected_structure():
             assert payload["title"] == "宏观巡检快照"
             assert payload["highlights"]
             assert payload["markdown"].startswith("# 宏观巡检快照")
+    finally:
+        _stop_server(server, thread)
+
+
+def test_macro_report_endpoint_can_render_html():
+    server, thread = _start_server()
+    host, port = server.server_address
+    try:
+        with urllib.request.urlopen(
+            f"http://{host}:{port}/macro/report?format=html"
+        ) as response:
+            content_type = response.headers.get("Content-Type", "")
+            body = response.read().decode("utf-8")
+            assert "text/html" in content_type
+            assert "宏观巡检快照" in body
+            assert "指标速览" in body
+    finally:
+        _stop_server(server, thread)
+
+
+def test_unknown_endpoint_returns_404():
+    server, thread = _start_server()
+    host, port = server.server_address
+    try:
+        try:
+            urllib.request.urlopen(f"http://{host}:{port}/unknown")
+        except HTTPError as exc:
+            assert exc.code == 404
+        else:  # pragma: no cover - urllib should raise for 404
+            raise AssertionError("Expected HTTP 404")
     finally:
         _stop_server(server, thread)

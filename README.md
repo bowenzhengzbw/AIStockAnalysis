@@ -84,6 +84,13 @@ python -m src.web.server
 
 - 访问 `/health` 可用于探活，例如 `http://127.0.0.1:8000/health`。
 - 访问 `/macro/report` 可获得最新的宏观巡检报告（基于合成数据）及对应的 Markdown 内容。
+- 访问 `/macro/report?format=html` 可查看自动生成的网页版本，适合作为后续前端集成的占位实现。
+
+如需在容器外部或远程浏览器中访问，可通过如下命令将服务绑定至 `0.0.0.0`：
+
+```bash
+python -c "from src.web.server import run; run('0.0.0.0', 8000)"
+```
 
 服务可作为后续前端/可视化集成的占位实现，待接入真实数据源后可直接复用接口结构。
 

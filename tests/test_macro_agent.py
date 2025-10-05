@@ -26,3 +26,8 @@ def test_macro_sentinel_generates_macro_summary():
     markdown = report.to_markdown()
     assert markdown.startswith("# 宏观巡检快照")
     assert "政策快讯" in markdown
+
+    html = report.to_html()
+    assert "<!DOCTYPE html>" in html
+    assert "宏观巡检快照" in html
+    assert "指标速览" in html
