@@ -39,10 +39,12 @@ Comprehensive AI-driven research platform for China's A-share market, targeting 
 - `src/examples/personal_pipeline.py` — 示例命令行工具，会注册合成数据源并输出每个任务的元数据与样例记录，帮助验证调度逻辑。
 - `src/agents/` — Agent 实现目录，目前提供 Macro Sentinel 预览，用于从流水线结果生成宏观巡检报告。
 - `src/examples/macro_sentinel_preview.py` — 基于合成数据的 Macro Sentinel 报告脚本，可快速查看宏观与政策面洞察。
+- `src/web/server.py` — 基于标准库的轻量 HTTP 服务，暴露宏观巡检报告与健康检查端点，便于网页或其他客户端集成。
 - `tests/test_data_sources.py` — Pytest-based validation covering TOML loading, categorisation, tag indexing, and budget enforcement logic.
 - `tests/test_pipeline_planner.py` — Pytest suite ensuring the ingestion plan loader validates dependencies and guards against incorrect data source wiring。
 - `tests/test_pipeline_runtime.py` — 集成级测试，验证运行时对全部任务、依赖子集与元数据透传的处理是否符合预期。
 - `tests/test_macro_agent.py` — 覆盖 Macro Sentinel 报告生成逻辑，确保核心指标与政策摘要输出稳定。
+- `tests/test_web_server.py` — Web 端到端烟囱测试，验证健康检查与宏观报告 HTTP 接口可用。
 
 ### Running the Test Suite
 1. (Optional) create a virtual environment and install pytest if it is not available: `pip install pytest`.
@@ -69,6 +71,21 @@ python -m src.examples.macro_sentinel_preview
 ```
 
 脚本会自动运行 Phase 1 流水线、汇总核心宏观指标与政策快讯，并输出 Markdown 报告，便于在人工审核前快速浏览模型结论。
+
+## Web 预览（HTTP 访问）
+
+仓库提供了一个使用 Python 标准库实现的轻量 HTTP 服务，无需额外依赖即可运行：
+
+```bash
+python -m src.web.server
+```
+
+服务默认监听 `http://127.0.0.1:8000`。
+
+- 访问 `/health` 可用于探活，例如 `http://127.0.0.1:8000/health`。
+- 访问 `/macro/report` 可获得最新的宏观巡检报告（基于合成数据）及对应的 Markdown 内容。
+
+服务可作为后续前端/可视化集成的占位实现，待接入真实数据源后可直接复用接口结构。
 
 ## Next Steps
 1. 结合 `docs/planning_stage_closeout.md` 中的记录确认 Phase 0 审批已闭环，并跟踪 Phase 1 启动状态。
