@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>离线股票宏观分析仪表盘</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <header class="hero">
+        <h1>离线股票宏观分析仪表盘</h1>
+        <p>基于自上而下的宏观-行业-公司框架，在无网络环境下快速呈现核心洞察。</p>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <form method="post" class="ticker-form" action="/">
+                <label for="ticker">输入已缓存的股票代码（如 AAPL、MSFT、TSLA）：</label>
+                <div class="form-row">
+                    <input type="text" id="ticker" name="ticker" placeholder="请输入股票代码" value="AAPL">
+                    <button type="submit">开始分析</button>
+                </div>
+            </form>
+            
+        </section>
+
+        
+    <section class="analysis">
+      <header>
+        <h2>Apple Inc. (AAPL)</h2>
+      </header>
+      <div class="grid">
+        <div class="card">
+          <h3>宏观周期</h3>
+          <ul class="metric-list"><li><span>指数趋势</span><strong>牛市倾向</strong></li><li><span>标普500 收盘</span><strong>4527.64</strong></li><li><span>近三个月收益</span><strong>6.21%</strong></li><li><span>年化波动率</span><strong>18.45%</strong></li><li><span>利率趋势</span><strong>利率温和上行</strong></li><li><span>VIX 水平</span><strong>16.30</strong></li></ul>
+        </div>
+        <div class="card">
+          <h3>行业/板块</h3>
+          <ul class="metric-list"><li><span>板块 ETF</span><strong>XLK</strong></li><li><span>半年收益</span><strong>8.40%</strong></li><li><span>标普500 同期</span><strong>5.90%</strong></li><li><span>相对表现</span><strong>2.50% 领先市场</strong></li></ul>
+        </div>
+        <div class="card">
+          <h3>公司基本面</h3>
+          <div class="fundamental-grid"><li><span>公司名称</span><strong>Apple Inc.</strong></li><li><span>所属板块</span><strong>Technology</strong></li><li><span>所属行业</span><strong>Consumer Electronics</strong></li><li><span>市值(十亿美元)</span><strong>2900.0</strong></li><li><span>Forward P/E</span><strong>28.7</strong></li><li><span>Trailing P/E</span><strong>30.2</strong></li><li><span>PEG</span><strong>2.5</strong></li><li><span>利润率</span><strong>25.7%</strong></li><li><span>ROE</span><strong>16.2%</strong></li><li><span>债务/权益</span><strong>176.3</strong></li><li><span>自由现金流(十亿美元)</span><strong>92.50</strong></li><li><span>股息率</span><strong>0.50%</strong></li></div><div class="qualitative"><ul><li>估值: forward P/E 28.7，结合行业均值判断估值水平。</li><li>盈利质量: 利润率 25.7%，需关注持续性与行业对比。</li><li>资本效率: ROE 16.2%，用于衡量公司竞争力。</li><li>杠杆结构: 债务/权益比 176.3，评估财务稳健。</li><li>现金流: 自由现金流 92.50 十亿美元，支撑投资与回报。</li><li>股东回报: 股息率 0.50%，结合派息可持续性评估。</li></ul></div>
+        </div>
+      </div>
+      <div class="commentary">
+        <div class="commentary-card"><h3>宏观周期解读</h3><p>大盘当前牛市倾向，近三个月收益约 6.21%，波动率 18.45%；利率环境利率温和上行，VIX 位于 16.30。</p></div><div class="commentary-card"><h3>行业景气解读</h3><p>板块 ETF XLK 半年收益 8.40%，标普500 同期 5.90%，相对表现 2.50% (领先市场)。</p></div><div class="commentary-card"><h3>公司基本面解读</h3><p>估值: forward P/E 28.7，结合行业均值判断估值水平。 盈利质量: 利润率 25.7%，需关注持续性与行业对比。 资本效率: ROE 16.2%，用于衡量公司竞争力。 杠杆结构: 债务/权益比 176.3，评估财务稳健。 现金流: 自由现金流 92.50 十亿美元，支撑投资与回报。 股东回报: 股息率 0.50%，结合派息可持续性评估。</p></div>
+      </div>
+    </section>
+    
+    </main>
+
+    <footer>
+        <p>提示：如需扩展支持的公司，请编辑 <code>data/offline_data.json</code> 并补充宏观与行业参数。</p>
+    </footer>
+</body>
+</html>
