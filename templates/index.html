@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>离线股票宏观分析仪表盘</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header class="hero">
+        <h1>离线股票宏观分析仪表盘</h1>
+        <p>基于自上而下的宏观-行业-公司框架，在无网络环境下快速呈现核心洞察。</p>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <form method="post" class="ticker-form" action="/">
+                <label for="ticker">输入已缓存的股票代码（如 AAPL、MSFT、TSLA）：</label>
+                <div class="form-row">
+                    <input type="text" id="ticker" name="ticker" placeholder="请输入股票代码" value="${ticker_value}">
+                    <button type="submit">开始分析</button>
+                </div>
+            </form>
+            ${error_block}
+        </section>
+
+        ${analysis_block}
+    </main>
+
+    <footer>
+        <p>提示：如需扩展支持的公司，请编辑 <code>data/offline_data.json</code> 并补充宏观与行业参数。</p>
+    </footer>
+</body>
+</html>
