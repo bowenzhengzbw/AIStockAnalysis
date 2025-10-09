@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票宏观分析仪表盘</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="hero">
+        <h1>股票宏观分析仪表盘</h1>
+        <p>输入股票代码后，实时抓取宏观、行业与公司数据，帮助快速梳理自上而下的投资观点。</p>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <form method="post" class="ticker-form" action="/">
+                <label for="ticker">输入股票代码（如 AAPL、MSFT、TSLA）：</label>
+                <div class="form-row">
+                    <input type="text" id="ticker" name="ticker" placeholder="请输入股票代码" value="{{ ticker }}" list="ticker-suggestions" autocomplete="off">
+                    <button type="submit">开始分析</button>
+                </div>
+                <datalist id="ticker-suggestions"></datalist>
+            </form>
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+        </section>
+
+        {% if analysis %}
+        <section class="analysis">
+            <header>
+                <h2>{{ analysis.company }} ({{ analysis.ticker }})</h2>
+            </header>
+            <div class="grid">
+                <div class="card">
+                    <h3>宏观周期</h3>
+                    <ul class="metric-list">
+                        {% for row in analysis.macro.rows %}
+                        <li><span>{{ row.label }}</span><strong>{{ row.value }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>行业/板块</h3>
+                    {% if analysis.sector.available %}
+                    <ul class="metric-list">
+                        {% for row in analysis.sector.rows %}
+                        <li><span>{{ row.label }}</span><strong>{{ row.value }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>{{ analysis.sector.message or '暂未匹配到行业 ETF，请参考其他行业资料。' }}</p>
+                    {% endif %}
+                </div>
+                <div class="card">
+                    <h3>公司基本面</h3>
+                    <ul class="fundamental-grid">
+                        {% for row in analysis.fundamentals.rows %}
+                        <li><span>{{ row.label }}</span><strong>{{ row.value }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                    {% if analysis.fundamentals.qualitative %}
+                    <div class="qualitative">
+                        <ul>
+                            {% for text in analysis.fundamentals.qualitative %}
+                            <li>{{ text }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="commentary">
+                {% for block in analysis.commentary %}
+                <div class="commentary-card">
+                    <h3>{{ block.title }}</h3>
+                    <p>{{ block.content }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <footer>
+        <p>数据来源：Yahoo Finance。需要保持服务器具备外网连接以实时抓取行情。</p>
+    </footer>
+    <script>
+        (function () {
+            const input = document.getElementById('ticker');
+            const dataList = document.getElementById('ticker-suggestions');
+            if (!input || !dataList) {
+                return;
+            }
+
+            let debounceTimer = null;
+
+            function renderOptions(items) {
+                dataList.innerHTML = '';
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.symbol;
+                    option.textContent = item.name ? `${item.symbol} — ${item.name}` : item.symbol;
+                    dataList.appendChild(option);
+                });
+            }
+
+            async function fetchSuggestions(query) {
+                if (!query) {
+                    renderOptions([]);
+                    return;
+                }
+                try {
+                    const response = await fetch(`/api/suggest?q=${encodeURIComponent(query)}`);
+                    if (!response.ok) {
+                        throw new Error('Network error');
+                    }
+                    const payload = await response.json();
+                    renderOptions(payload.results || []);
+                } catch (err) {
+                    renderOptions([]);
+                }
+            }
+
+            input.addEventListener('input', () => {
+                const query = input.value.trim();
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+                debounceTimer = setTimeout(() => fetchSuggestions(query), 200);
+            });
+        })();
+    </script>
+</body>
+</html>
