@@ -3,32 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>离线股票宏观分析仪表盘</title>
-    <link rel="stylesheet" href="static/styles.css">
+    <title>股票宏观分析仪表盘</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <header class="hero">
-        <h1>离线股票宏观分析仪表盘</h1>
-        <p>基于自上而下的宏观-行业-公司框架，在无网络环境下快速呈现核心洞察。</p>
+        <h1>股票宏观分析仪表盘</h1>
+        <p>输入股票代码后，实时抓取宏观、行业与公司数据，帮助快速梳理自上而下的投资观点。</p>
     </header>
 
     <main class="container">
         <section class="card">
             <form method="post" class="ticker-form" action="/">
-                <label for="ticker">输入已缓存的股票代码（如 AAPL、MSFT、TSLA）：</label>
+                <label for="ticker">输入股票代码（如 AAPL、MSFT、TSLA）：</label>
                 <div class="form-row">
-                    <input type="text" id="ticker" name="ticker" placeholder="请输入股票代码" value="${ticker_value}">
+                    <input type="text" id="ticker" name="ticker" placeholder="请输入股票代码" value="{{ ticker }}">
                     <button type="submit">开始分析</button>
                 </div>
             </form>
-            ${error_block}
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
         </section>
 
-        ${analysis_block}
+        {% if analysis %}
+        <section class="analysis">
+            <header>
+                <h2>{{ analysis.company }} ({{ analysis.ticker }})</h2>
+            </header>
+            <div class="grid">
+                <div class="card">
+                    <h3>宏观周期</h3>
+                    <ul class="metric-list">
+                        {% for row in analysis.macro.rows %}
+                        <li><span>{{ row.label }}</span><strong>{{ row.value }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>行业/板块</h3>
+                    {% if analysis.sector.available %}
+                    <ul class="metric-list">
+                        {% for row in analysis.sector.rows %}
+                        <li><span>{{ row.label }}</span><strong>{{ row.value }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>{{ analysis.sector.message or '暂未匹配到行业 ETF，请参考其他行业资料。' }}</p>
+                    {% endif %}
+                </div>
+                <div class="card">
+                    <h3>公司基本面</h3>
+                    <ul class="fundamental-grid">
+                        {% for row in analysis.fundamentals.rows %}
+                        <li><span>{{ row.label }}</span><strong>{{ row.value }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                    {% if analysis.fundamentals.qualitative %}
+                    <div class="qualitative">
+                        <ul>
+                            {% for text in analysis.fundamentals.qualitative %}
+                            <li>{{ text }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="commentary">
+                {% for block in analysis.commentary %}
+                <div class="commentary-card">
+                    <h3>{{ block.title }}</h3>
+                    <p>{{ block.content }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
     </main>
 
     <footer>
-        <p>提示：如需扩展支持的公司，请编辑 <code>data/offline_data.json</code> 并补充宏观与行业参数。</p>
+        <p>数据来源：Yahoo Finance。需要保持服务器具备外网连接以实时抓取行情。</p>
     </footer>
 </body>
 </html>
