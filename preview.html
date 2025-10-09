@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票宏观分析仪表盘 - 预览</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <header class="hero">
+        <h1>股票宏观分析仪表盘</h1>
+        <p>该页面展示了实时版本的布局示例。正式使用时将基于外网数据生成分析结果。</p>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <form class="ticker-form">
+                <label for="ticker">输入股票代码（如 AAPL、MSFT、TSLA）：</label>
+                <div class="form-row">
+                    <input type="text" id="ticker" name="ticker" value="AAPL" disabled>
+                    <button type="button" disabled>开始分析</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="analysis">
+            <header>
+                <h2>Apple Inc. (AAPL)</h2>
+            </header>
+            <div class="grid">
+                <div class="card">
+                    <h3>宏观周期</h3>
+                    <ul class="metric-list">
+                        <li><span>指数趋势</span><strong>牛市倾向</strong></li>
+                        <li><span>标普500 收盘</span><strong>5200.45</strong></li>
+                        <li><span>近三个月收益</span><strong>5.82%</strong></li>
+                        <li><span>年化波动率</span><strong>17.34%</strong></li>
+                        <li><span>10年期美债收益率</span><strong>4.28%</strong></li>
+                        <li><span>利率趋势</span><strong>利率基本稳定</strong></li>
+                        <li><span>VIX 水平</span><strong>14.30</strong></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>行业/板块</h3>
+                    <ul class="metric-list">
+                        <li><span>板块 ETF</span><strong>XLK</strong></li>
+                        <li><span>板块中文</span><strong>科技</strong></li>
+                        <li><span>半年收益</span><strong>12.40%</strong></li>
+                        <li><span>标普500 同期</span><strong>8.10%</strong></li>
+                        <li><span>相对表现</span><strong>4.30% 领先市场</strong></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>公司基本面</h3>
+                    <ul class="fundamental-grid">
+                        <li><span>公司名称</span><strong>Apple Inc.</strong></li>
+                        <li><span>所属板块</span><strong>Technology</strong></li>
+                        <li><span>所属行业</span><strong>Consumer Electronics</strong></li>
+                        <li><span>市值(十亿美元)</span><strong>2850.00</strong></li>
+                        <li><span>Forward P/E</span><strong>27.8</strong></li>
+                        <li><span>Trailing P/E</span><strong>29.4</strong></li>
+                        <li><span>PEG</span><strong>2.4</strong></li>
+                        <li><span>利润率</span><strong>24.80%</strong></li>
+                        <li><span>ROE</span><strong>17.10%</strong></li>
+                        <li><span>债务/权益</span><strong>175.0</strong></li>
+                        <li><span>自由现金流(十亿美元)</span><strong>95.00</strong></li>
+                        <li><span>股息率</span><strong>0.55%</strong></li>
+                    </ul>
+                    <div class="qualitative">
+                        <ul>
+                            <li>估值: forward P/E 27.8，结合行业均值判断估值水平。</li>
+                            <li>盈利质量: 利润率 24.8%，需关注持续性与行业对比。</li>
+                            <li>资本效率: ROE 17.1%，用于衡量公司竞争力。</li>
+                            <li>杠杆结构: 债务/权益比 175.0，评估财务稳健。</li>
+                            <li>现金流: 自由现金流 95.00 十亿美元，支撑投资与回报。</li>
+                            <li>股东回报: 股息率 0.55%，结合派息可持续性评估。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="commentary">
+                <div class="commentary-card">
+                    <h3>宏观周期解读</h3>
+                    <p>大盘当前牛市倾向，近三个月收益约 5.82%，年化波动率 17.34%；10 年期美债收益率 4.28%，VIX 位于 14.30。</p>
+                </div>
+                <div class="commentary-card">
+                    <h3>行业景气解读</h3>
+                    <p>板块 ETF XLK (科技) 半年收益 12.40%，标普500 同期 8.10%，相对表现 4.30% (领先市场)。</p>
+                </div>
+                <div class="commentary-card">
+                    <h3>公司基本面解读</h3>
+                    <p>估值、盈利质量、资本效率、杠杆结构与现金流均表现稳健，需结合行业周期与产品节奏动态跟踪。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>正式版本会在服务器端实时抓取 Yahoo Finance 数据。</p>
+    </footer>
+</body>
+</html>
