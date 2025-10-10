@@ -84,6 +84,17 @@ body {
     box-shadow: 0 10px 24px rgba(37, 99, 235, 0.2);
 }
 
+
+.helper {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #5f6368;
+}
+
+.helper.error {
+    color: #d93025;
+}
+
 .alert {
     margin-top: 1rem;
     padding: 0.85rem 1rem;

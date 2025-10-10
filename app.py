@@ -2,16 +2,22 @@
 from __future__ import annotations
 
 import math
+
+from functools import lru_cache
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
-import yfinance as yf
- 
 from flask import Flask, jsonify, render_template, request
 import requests
-from flask import Flask, render_template, request
+from urllib.parse import quote
 
 
+class SuggestionServiceError(RuntimeError):
+    """Raised when the autocomplete service cannot respond."""
+
+
+class SymbolValidationUnavailable(RuntimeError):
+    """Raised when a ticker cannot be validated due to upstream issues."""
 
 class AnalysisError(RuntimeError):
     """Raised when an analysis step fails."""
@@ -36,8 +42,10 @@ BENCHMARK_ETF = "SPY"
 SP500_INDEX = "^GSPC"
 VIX_INDEX = "^VIX"
 TREASURY_INDEX = "^TNX"
-
 YAHOO_SEARCH_URL = "https://query1.finance.yahoo.com/v1/finance/search"
+YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+YAHOO_QUOTE_SUMMARY_URL = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{symbol}"
+YAHOO_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
 
 
 app = Flask(__name__)
@@ -60,33 +68,129 @@ def _format_percent(value: Any, digits: int = 2) -> str:
     except (TypeError, ValueError):
         return "-"
 
+def _request_yahoo_json(
+    url: str,
+    *,
+    params: Dict[str, Any] | None = None,
+    timeout: int = 10,
+    error_cls: type[Exception] = AnalysisError,
+    error_message: str = "无法连接到行情服务，请稍后再试。",
+) -> Dict[str, Any]:
+    headers = {"User-Agent": YAHOO_USER_AGENT}
+    try:
+        response = requests.get(url, params=params, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as exc:  # noqa: BLE001 - convert to domain errors
+        raise error_cls(error_message) from exc
+    except ValueError as exc:  # noqa: BLE001 - handle invalid json payloads
+        raise error_cls("行情服务返回了无效的数据格式。") from exc
 
-def _download_close_series(symbol: str, period: str = "1y") -> pd.Series:
-    data = yf.download(
-        symbol,
-        period=period,
-        interval="1d",
-        auto_adjust=True,
-        progress=False,
-        threads=False,
-    )
-    if data.empty:
+
+def _chart_to_series(chart_payload: Dict[str, Any], symbol: str) -> pd.Series:
+    chart = chart_payload.get("chart") or {}
+    error = chart.get("error")
+    if error:
+        description = error.get("description") if isinstance(error, dict) else None
+        message = description or f"无法获取 {symbol} 的行情数据，请确认代码是否正确。"
+        raise AnalysisError(message)
+
+    results = chart.get("result") or []
+    if not results:
         raise AnalysisError(f"无法获取 {symbol} 的行情数据，请确认代码是否正确。")
-    series = data.get("Close")
-    if isinstance(series, pd.DataFrame):
-        # In some cases (multi-index columns) take the first level close values
-        series = series.xs("Close", axis=1, level=1)
+
+    result = results[0]
+    timestamps = result.get("timestamp") or []
+    indicators = result.get("indicators") or {}
+
+    close_values: List[float] | None = None
+    adjclose = (indicators.get("adjclose") or [{}])[0]
+    if isinstance(adjclose, dict):
+        close_values = adjclose.get("adjclose")
+    if not close_values:
+        quote = (indicators.get("quote") or [{}])[0]
+        if isinstance(quote, dict):
+            close_values = quote.get("close")
+
+    if not close_values:
+        raise AnalysisError(f"{symbol} 缺少收盘价数据，暂无法完成分析。")
+
+    length = min(len(timestamps), len(close_values))
+    if length == 0:
+        raise AnalysisError(f"{symbol} 缺少收盘价数据，暂无法完成分析。")
+
+    index = pd.to_datetime(timestamps[:length], unit="s")
+    series = pd.Series(close_values[:length], index=index)
+
     series = series.dropna()
     if series.empty:
         raise AnalysisError(f"{symbol} 缺少收盘价数据，暂无法完成分析。")
     return series
+  
+def _download_close_series(symbol: str, period: str = "1y") -> pd.Series:
+    url = YAHOO_CHART_URL.format(symbol=quote(symbol))
+    params = {
+        "range": period,
+        "interval": "1d",
+        "includePrePost": "false",
+        "events": "div,split",
+        "lang": "en-US",
+        "region": "US",
+    }
+    payload = _request_yahoo_json(
+        url,
+        params=params,
+        error_cls=AnalysisError,
+        error_message=f"无法获取 {symbol} 的行情数据，请确认网络连接后重试。",
+    )
+    return _chart_to_series(payload, symbol)
 
 
+@lru_cache(maxsize=512)
+def _symbol_is_tradeable(symbol: str) -> bool:
+    """Return True if Yahoo Finance exposes recent pricing for the symbol."""
 
-def fetch_symbol_suggestions(query: str, limit: int = 8) -> List[Dict[str, str]]:
+    url = YAHOO_CHART_URL.format(symbol=quote(symbol))
+    params = {
+        "range": "5d",
+        "interval": "1d",
+        "includePrePost": "false",
+        "events": "div,split",
+        "lang": "en-US",
+        "region": "US",
+    }
+
+    try:
+        payload = _request_yahoo_json(
+            url,
+            params=params,
+            error_cls=SymbolValidationUnavailable,
+            error_message="实时验证股票有效性时遇到网络问题，请稍后再试。",
+        )
+    except AnalysisError as exc:  # noqa: BLE001 - ensure validation specific error type
+        raise SymbolValidationUnavailable from exc
+
+    chart = payload.get("chart") or {}
+    if chart.get("error"):
+        return False
+
+    results = chart.get("result") or []
+    if not results:
+        return False
+
+    indicators = results[0].get("indicators") or {}
+    quote = (indicators.get("quote") or [{}])[0]
+    closes = []
+    if isinstance(quote, dict):
+        closes = quote.get("close") or []
+
+    return any(value is not None for value in closes)
+
+
+def fetch_symbol_suggestions(query: str, limit: int = 8) -> Dict[str, Any]:
     query = query.strip()
     if not query:
-        return []
+        return {"results": [], "error": None}
 
     params = {
         "q": query,
@@ -97,14 +201,21 @@ def fetch_symbol_suggestions(query: str, limit: int = 8) -> List[Dict[str, str]]
     }
 
     try:
-        response = requests.get(YAHOO_SEARCH_URL, params=params, timeout=5)
+
+        response = requests.get(
+            YAHOO_SEARCH_URL,
+            params=params,
+            timeout=5,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
         response.raise_for_status()
         payload = response.json()
-    except Exception:
-        return []
+    except requests.RequestException as exc:
+        raise SuggestionServiceError("无法连接到行情搜索服务，请检查网络后重试。") from exc
 
     quotes = payload.get("quotes") or []
     suggestions: List[Dict[str, str]] = []
+    validation_failed = False
     for quote in quotes:
         symbol = quote.get("symbol")
         name = quote.get("longname") or quote.get("shortname") or quote.get("name")
@@ -115,7 +226,12 @@ def fetch_symbol_suggestions(query: str, limit: int = 8) -> List[Dict[str, str]]
             continue
         if quote_type not in {"EQUITY", "ETF"}:
             continue
-
+        try:
+            if not _symbol_is_tradeable(symbol.upper()):
+                continue
+        except SymbolValidationUnavailable:
+            validation_failed = True
+            continue
         suggestions.append(
             {
                 "symbol": symbol.upper(),
@@ -125,8 +241,13 @@ def fetch_symbol_suggestions(query: str, limit: int = 8) -> List[Dict[str, str]]
         )
         if len(suggestions) >= limit:
             break
+    error_message = None
+    if not suggestions and validation_failed:
+        error_message = "实时验证股票有效性时遇到网络问题，请稍后再试。"
 
-    return suggestions
+    return {"results": suggestions, "error": error_message}
+
+
 
 # ---------------------------------------------------------------------------
 # Macro layer
@@ -219,30 +340,62 @@ def evaluate_sector(sector: str | None) -> Dict[str, Any]:
 # Company layer
 # ---------------------------------------------------------------------------
 
-def fetch_company_fundamentals(ticker: str) -> Dict[str, Any]:
-    try:
-        yf_ticker = yf.Ticker(ticker)
-        info = yf_ticker.get_info()
-    except Exception as exc:  # noqa: BLE001 - surface friendly error
-        raise AnalysisError("无法获取公司基础数据，请确认股票代码是否有效。") from exc
+def _extract_raw(value: Any) -> Any:
+    if isinstance(value, dict):
+        if "raw" in value:
+            return value.get("raw")
+        if "fmt" in value and value.get("fmt") not in {None, "", "N/A"}:
+            return value.get("fmt")
+    return value
 
-    if not info:
+
+def fetch_company_fundamentals(ticker: str) -> Dict[str, Any]:
+    url = YAHOO_QUOTE_SUMMARY_URL.format(symbol=quote(ticker))
+    params = {
+        "modules": "price,summaryProfile,financialData,defaultKeyStatistics,summaryDetail",
+        "lang": "en-US",
+        "region": "US",
+    }
+    payload = _request_yahoo_json(
+        url,
+        params=params,
+        error_cls=AnalysisError,
+        error_message="无法获取公司基础数据，请确认股票代码是否有效。",
+    )
+
+    summary = payload.get("quoteSummary") or {}
+    if summary.get("error"):
         raise AnalysisError("未能检索到公司的基本面信息，请稍后再试。")
+
+    results = summary.get("result") or []
+    if not results:
+        raise AnalysisError("未能检索到公司的基本面信息，请稍后再试。")
+
+    result = results[0]
+
+    def get_value(*paths: Tuple[str, str]) -> Any:
+        for module, field in paths:
+            module_data = result.get(module) or {}
+            value = module_data.get(field)
+            value = _extract_raw(value)
+            if value is not None:
+                return value
+        return None
 
     metrics = {
         "ticker": ticker,
-        "longName": info.get("longName") or info.get("shortName") or ticker,
-        "sector": info.get("sector"),
-        "industry": info.get("industry"),
-        "marketCap": info.get("marketCap"),
-        "forwardPE": info.get("forwardPE"),
-        "trailingPE": info.get("trailingPE"),
-        "pegRatio": info.get("pegRatio"),
-        "profitMargins": info.get("profitMargins"),
-        "returnOnEquity": info.get("returnOnEquity"),
-        "debtToEquity": info.get("debtToEquity"),
-        "freeCashflow": info.get("freeCashflow"),
-        "dividendYield": info.get("dividendYield"),
+        "longName": get_value(("price", "longName"), ("price", "shortName")) or ticker,
+        "sector": get_value(("summaryProfile", "sector")),
+        "industry": get_value(("summaryProfile", "industry")),
+        "marketCap": get_value(("price", "marketCap")),
+        "forwardPE": get_value(("summaryDetail", "forwardPE"), ("defaultKeyStatistics", "forwardPE")),
+        "trailingPE": get_value(("summaryDetail", "trailingPE"), ("defaultKeyStatistics", "trailingPE")),
+        "pegRatio": get_value(("defaultKeyStatistics", "pegRatio"), ("summaryDetail", "pegRatio")),
+        "profitMargins": get_value(("financialData", "profitMargins")),
+        "returnOnEquity": get_value(("financialData", "returnOnEquity")),
+        "debtToEquity": get_value(("financialData", "debtToEquity")),
+        "freeCashflow": get_value(("financialData", "freeCashflow")),
+        "dividendYield": get_value(("summaryDetail", "dividendYield")),
     }
 
     rows = [
@@ -408,21 +561,21 @@ def index() -> str:
             analysis = perform_analysis(ticker)
         except AnalysisError as exc:
             error = str(exc)
-        except Exception:
-            error = "获取实时数据时出现异常，请稍后再试。"
+        except Exception as exc:  # noqa: BLE001 - surface friendly error
+            app.logger.exception("analysis failed for %s", ticker, exc_info=exc)
+            error = "获取实时数据时出现异常，请检查网络连接或稍后再试。"
 
     return render_template("index.html", analysis=analysis, error=error, ticker=ticker)
-
-
 
 @app.get("/api/suggest")
 def suggest() -> Any:
     query = request.args.get("q", "")
-    suggestions = fetch_symbol_suggestions(query)
-    return jsonify({"results": suggestions})
+    try:
+        payload = fetch_symbol_suggestions(query)
+    except SuggestionServiceError as exc:
+        return jsonify({"results": [], "error": str(exc)}), 503
 
-
-
+    return jsonify(payload)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)

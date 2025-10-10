@@ -1,5 +1,4 @@
 Flask>=2.3
 pandas>=2.0
-yfinance>=0.2.33
 requests>=2.31
 
