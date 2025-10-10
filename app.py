@@ -6,8 +6,12 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 import yfinance as yf
+ 
 from flask import Flask, jsonify, render_template, request
 import requests
+=======
+from flask import Flask, render_template, request
+
 
 
 class AnalysisError(RuntimeError):
@@ -33,7 +37,10 @@ BENCHMARK_ETF = "SPY"
 SP500_INDEX = "^GSPC"
 VIX_INDEX = "^VIX"
 TREASURY_INDEX = "^TNX"
+
 YAHOO_SEARCH_URL = "https://query1.finance.yahoo.com/v1/finance/search"
+=======
+
 
 app = Flask(__name__)
 
@@ -75,6 +82,7 @@ def _download_close_series(symbol: str, period: str = "1y") -> pd.Series:
     if series.empty:
         raise AnalysisError(f"{symbol} 缺少收盘价数据，暂无法完成分析。")
     return series
+
 
 
 def fetch_symbol_suggestions(query: str, limit: int = 8) -> List[Dict[str, str]]:
@@ -122,6 +130,8 @@ def fetch_symbol_suggestions(query: str, limit: int = 8) -> List[Dict[str, str]]
 
     return suggestions
 
+
+=======
 
 # ---------------------------------------------------------------------------
 # Macro layer
@@ -409,12 +419,15 @@ def index() -> str:
     return render_template("index.html", analysis=analysis, error=error, ticker=ticker)
 
 
+
 @app.get("/api/suggest")
 def suggest() -> Any:
     query = request.args.get("q", "")
     suggestions = fetch_symbol_suggestions(query)
     return jsonify({"results": suggestions})
 
+
+=======
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)

@@ -17,10 +17,16 @@
             <form method="post" class="ticker-form" action="/">
                 <label for="ticker">输入股票代码（如 AAPL、MSFT、TSLA）：</label>
                 <div class="form-row">
+
                     <input type="text" id="ticker" name="ticker" placeholder="请输入股票代码" value="{{ ticker }}" list="ticker-suggestions" autocomplete="off">
                     <button type="submit">开始分析</button>
                 </div>
                 <datalist id="ticker-suggestions"></datalist>
+
+                    <input type="text" id="ticker" name="ticker" placeholder="请输入股票代码" value="{{ ticker }}">
+                    <button type="submit">开始分析</button>
+                </div>
+
             </form>
             {% if error %}
             <div class="alert alert-error">{{ error }}</div>
@@ -86,6 +92,7 @@
     <footer>
         <p>数据来源：Yahoo Finance。需要保持服务器具备外网连接以实时抓取行情。</p>
     </footer>
+
     <script>
         (function () {
             const input = document.getElementById('ticker');
