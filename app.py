@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+
 from functools import lru_cache
 from typing import Any, Dict, List, Tuple
 
@@ -17,7 +18,6 @@ class SuggestionServiceError(RuntimeError):
 
 class SymbolValidationUnavailable(RuntimeError):
     """Raised when a ticker cannot be validated due to upstream issues."""
-
 
 class AnalysisError(RuntimeError):
     """Raised when an analysis step fails."""
@@ -47,6 +47,7 @@ YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
 YAHOO_QUOTE_SUMMARY_URL = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{symbol}"
 YAHOO_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
 
+
 app = Flask(__name__)
 
 
@@ -66,7 +67,6 @@ def _format_percent(value: Any, digits: int = 2) -> str:
         return f"{float(value) * 100:.{digits}f}%"
     except (TypeError, ValueError):
         return "-"
-
 
 def _request_yahoo_json(
     url: str,
@@ -121,12 +121,12 @@ def _chart_to_series(chart_payload: Dict[str, Any], symbol: str) -> pd.Series:
 
     index = pd.to_datetime(timestamps[:length], unit="s")
     series = pd.Series(close_values[:length], index=index)
+
     series = series.dropna()
     if series.empty:
         raise AnalysisError(f"{symbol} 缺少收盘价数据，暂无法完成分析。")
     return series
-
-
+  
 def _download_close_series(symbol: str, period: str = "1y") -> pd.Series:
     url = YAHOO_CHART_URL.format(symbol=quote(symbol))
     params = {
@@ -201,6 +201,7 @@ def fetch_symbol_suggestions(query: str, limit: int = 8) -> Dict[str, Any]:
     }
 
     try:
+
         response = requests.get(
             YAHOO_SEARCH_URL,
             params=params,
@@ -225,14 +226,12 @@ def fetch_symbol_suggestions(query: str, limit: int = 8) -> Dict[str, Any]:
             continue
         if quote_type not in {"EQUITY", "ETF"}:
             continue
-
         try:
             if not _symbol_is_tradeable(symbol.upper()):
                 continue
         except SymbolValidationUnavailable:
             validation_failed = True
             continue
-
         suggestions.append(
             {
                 "symbol": symbol.upper(),
@@ -242,12 +241,12 @@ def fetch_symbol_suggestions(query: str, limit: int = 8) -> Dict[str, Any]:
         )
         if len(suggestions) >= limit:
             break
-
     error_message = None
     if not suggestions and validation_failed:
         error_message = "实时验证股票有效性时遇到网络问题，请稍后再试。"
 
     return {"results": suggestions, "error": error_message}
+
 
 
 # ---------------------------------------------------------------------------
@@ -568,7 +567,6 @@ def index() -> str:
 
     return render_template("index.html", analysis=analysis, error=error, ticker=ticker)
 
-
 @app.get("/api/suggest")
 def suggest() -> Any:
     query = request.args.get("q", "")
@@ -578,7 +576,6 @@ def suggest() -> Any:
         return jsonify({"results": [], "error": str(exc)}), 503
 
     return jsonify(payload)
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)

@@ -22,6 +22,7 @@
                 </div>
                 <datalist id="ticker-suggestions"></datalist>
                 <p class="helper" id="ticker-hint"></p>
+
             </form>
             {% if error %}
             <div class="alert alert-error">{{ error }}</div>
@@ -87,16 +88,20 @@
     <footer>
         <p>数据来源：Yahoo Finance。需要保持服务器具备外网连接以实时抓取行情。</p>
     </footer>
+
     <script>
         (function () {
             const input = document.getElementById('ticker');
             const dataList = document.getElementById('ticker-suggestions');
+
             const hint = document.getElementById('ticker-hint');
+
             if (!input || !dataList) {
                 return;
             }
 
             let debounceTimer = null;
+
 
             function setHint(message, isError = false) {
                 if (!hint) {
@@ -115,7 +120,9 @@
                 items.forEach(item => {
                     const option = document.createElement('option');
                     option.value = item.symbol;
+
                     option.label = item.name ? `${item.symbol} — ${item.name}` : item.symbol;
+
                     dataList.appendChild(option);
                 });
             }
@@ -123,7 +130,9 @@
             async function fetchSuggestions(query) {
                 if (!query) {
                     renderOptions([]);
+
                     setHint('', false);
+
                     return;
                 }
                 try {
@@ -146,6 +155,7 @@
                 } catch (err) {
                     renderOptions([]);
                     setHint('无法连接到自动完成服务，请检查网络。', true);
+
                 }
             }
 
