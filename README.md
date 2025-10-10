@@ -15,6 +15,8 @@
    python -m venv .venv
    source .venv/bin/activate  # Windows 使用 .venv\Scripts\activate
    pip install -r requirements.txt
+   # 如在国内网络环境，可改用清华源以提升安装成功率：
+   # pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
    ```
 
 2. **启动服务**
