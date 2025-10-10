@@ -6,7 +6,12 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 import yfinance as yf
+ 
+from flask import Flask, jsonify, render_template, request
+import requests
+=======
 from flask import Flask, render_template, request
+
 
 
 class AnalysisError(RuntimeError):
@@ -32,6 +37,10 @@ BENCHMARK_ETF = "SPY"
 SP500_INDEX = "^GSPC"
 VIX_INDEX = "^VIX"
 TREASURY_INDEX = "^TNX"
+
+YAHOO_SEARCH_URL = "https://query1.finance.yahoo.com/v1/finance/search"
+=======
+
 
 app = Flask(__name__)
 
@@ -74,6 +83,55 @@ def _download_close_series(symbol: str, period: str = "1y") -> pd.Series:
         raise AnalysisError(f"{symbol} 缺少收盘价数据，暂无法完成分析。")
     return series
 
+
+
+def fetch_symbol_suggestions(query: str, limit: int = 8) -> List[Dict[str, str]]:
+    query = query.strip()
+    if not query:
+        return []
+
+    params = {
+        "q": query,
+        "quotesCount": limit,
+        "newsCount": 0,
+        "lang": "en-US",
+        "region": "US",
+    }
+
+    try:
+        response = requests.get(YAHOO_SEARCH_URL, params=params, timeout=5)
+        response.raise_for_status()
+        payload = response.json()
+    except Exception:
+        return []
+
+    quotes = payload.get("quotes") or []
+    suggestions: List[Dict[str, str]] = []
+    for quote in quotes:
+        symbol = quote.get("symbol")
+        name = quote.get("longname") or quote.get("shortname") or quote.get("name")
+        quote_type = (quote.get("quoteType") or "").upper()
+        exch = quote.get("exchDisp") or quote.get("exch")
+
+        if not symbol:
+            continue
+        if quote_type not in {"EQUITY", "ETF"}:
+            continue
+
+        suggestions.append(
+            {
+                "symbol": symbol.upper(),
+                "name": name or symbol.upper(),
+                "exchange": exch or "",
+            }
+        )
+        if len(suggestions) >= limit:
+            break
+
+    return suggestions
+
+
+=======
 
 # ---------------------------------------------------------------------------
 # Macro layer
@@ -360,6 +418,16 @@ def index() -> str:
 
     return render_template("index.html", analysis=analysis, error=error, ticker=ticker)
 
+
+
+@app.get("/api/suggest")
+def suggest() -> Any:
+    query = request.args.get("q", "")
+    suggestions = fetch_symbol_suggestions(query)
+    return jsonify({"results": suggestions})
+
+
+=======
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)

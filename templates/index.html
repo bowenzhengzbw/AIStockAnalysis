@@ -17,9 +17,16 @@
             <form method="post" class="ticker-form" action="/">
                 <label for="ticker">输入股票代码（如 AAPL、MSFT、TSLA）：</label>
                 <div class="form-row">
+
+                    <input type="text" id="ticker" name="ticker" placeholder="请输入股票代码" value="{{ ticker }}" list="ticker-suggestions" autocomplete="off">
+                    <button type="submit">开始分析</button>
+                </div>
+                <datalist id="ticker-suggestions"></datalist>
+
                     <input type="text" id="ticker" name="ticker" placeholder="请输入股票代码" value="{{ ticker }}">
                     <button type="submit">开始分析</button>
                 </div>
+
             </form>
             {% if error %}
             <div class="alert alert-error">{{ error }}</div>
@@ -85,5 +92,52 @@
     <footer>
         <p>数据来源：Yahoo Finance。需要保持服务器具备外网连接以实时抓取行情。</p>
     </footer>
+
+    <script>
+        (function () {
+            const input = document.getElementById('ticker');
+            const dataList = document.getElementById('ticker-suggestions');
+            if (!input || !dataList) {
+                return;
+            }
+
+            let debounceTimer = null;
+
+            function renderOptions(items) {
+                dataList.innerHTML = '';
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.symbol;
+                    option.textContent = item.name ? `${item.symbol} — ${item.name}` : item.symbol;
+                    dataList.appendChild(option);
+                });
+            }
+
+            async function fetchSuggestions(query) {
+                if (!query) {
+                    renderOptions([]);
+                    return;
+                }
+                try {
+                    const response = await fetch(`/api/suggest?q=${encodeURIComponent(query)}`);
+                    if (!response.ok) {
+                        throw new Error('Network error');
+                    }
+                    const payload = await response.json();
+                    renderOptions(payload.results || []);
+                } catch (err) {
+                    renderOptions([]);
+                }
+            }
+
+            input.addEventListener('input', () => {
+                const query = input.value.trim();
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+                debounceTimer = setTimeout(() => fetchSuggestions(query), 200);
+            });
+        })();
+    </script>
 </body>
 </html>
