@@ -9,7 +9,6 @@ import yfinance as yf
  
 from flask import Flask, jsonify, render_template, request
 import requests
-=======
 from flask import Flask, render_template, request
 
 
@@ -39,7 +38,6 @@ VIX_INDEX = "^VIX"
 TREASURY_INDEX = "^TNX"
 
 YAHOO_SEARCH_URL = "https://query1.finance.yahoo.com/v1/finance/search"
-=======
 
 
 app = Flask(__name__)
@@ -129,9 +127,6 @@ def fetch_symbol_suggestions(query: str, limit: int = 8) -> List[Dict[str, str]]
             break
 
     return suggestions
-
-
-=======
 
 # ---------------------------------------------------------------------------
 # Macro layer
@@ -427,7 +422,7 @@ def suggest() -> Any:
     return jsonify({"results": suggestions})
 
 
-=======
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
